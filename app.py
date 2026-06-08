@@ -40,9 +40,18 @@ def chat():
             result = response.json()
             message = result['choices'][0]['message']
             
-            # Get both fields - content has the actual story!
+            # Get both fields
             content = message.get('content', '').strip()
             reasoning_content = message.get('reasoning_content', '').strip()
+            
+            # If content is empty, the actual output might be in reasoning_content
+            # Extract the final output from reasoning_content (after thinking process)
+            if not content and reasoning_content:
+                lines = reasoning_content.split('\n')
+                for i, line in enumerate(lines):
+                    if 'thinking process' in line.lower() and i + 1 < len(lines):
+                        content = ' '.join([l.strip() for l in lines[i+1:] if l.strip()]).strip()
+                        break
             
             return jsonify({
                 'original_prompt': prompt,
