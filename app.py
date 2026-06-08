@@ -122,10 +122,16 @@ Do NOT rewrite the prompt. Only provide feedback. Keep your entire response unde
         
         if response.status_code == 200:
             result = response.json()
-            suggestions = result['choices'][0]['message']['content'].strip()
-            print(f"Refinement suggestions received: {suggestions[:100]}...")
-            # Return the original prompt with the suggestions appended
-            return f"{original_prompt}\n\n--- Expert Novelist Suggestions ---\n{suggestions}"
+            # Handle different response structures
+            if 'choices' in result and len(result['choices']) > 0:
+                message = result['choices'][0].get('message', {})
+                suggestions = message.get('content', 'No suggestions available')
+                print(f"Refinement suggestions received: {str(suggestions)[:100]}...")
+                # Return the original prompt with the suggestions appended
+                return f"{original_prompt}\n\n--- Expert Novelist Suggestions ---\n{suggestions}"
+            else:
+                print(f"Unexpected response structure: {result}")
+                return f"{original_prompt}\n\n--- Expert Novelist Suggestions ---\nNo suggestions received from AI model. Please try again."
         else:
             print(f"Error refining prompt: {response.status_code}")
             # Return a helpful error message
@@ -186,18 +192,29 @@ def generate_story(original_prompt, word_count, selected_model=None):
         
         if response.status_code == 200:
             result = response.json()
-            story_text = result['choices'][0]['message']['content'].strip()
-            print(f"Story generated successfully, length: {len(story_text)} chars")
-            
-            # Count actual words in the generated story
-            actual_word_count = len(re.findall(r'\b\w+\b', story_text))
-            
-            return {
-                "story": story_text,
-                "actual_word_count": actual_word_count,
-                "model_used": model_to_use,  # Show which model was used
-                "refined_prompt": refined_prompt  # Include the refined prompt that was used for clarity
-            }
+            # Handle different response structures
+            if 'choices' in result and len(result['choices']) > 0:
+                message = result['choices'][0].get('message', {})
+                story_text = message.get('content', 'No story generated')
+                print(f"Story generated successfully, length: {len(story_text)} chars")
+                
+                # Count actual words in the generated story
+                actual_word_count = len(re.findall(r'\b\w+\b', story_text))
+                
+                return {
+                    "story": story_text,
+                    "actual_word_count": actual_word_count,
+                    "model_used": model_to_use,  # Show which model was used
+                    "refined_prompt": refined_prompt  # Include the refined prompt that was used for clarity
+                }
+            else:
+                print(f"Unexpected response structure: {result}")
+                return {
+                    "story": "No story content received from AI model. Please try again with a different model or prompt.",
+                    "actual_word_count": 0,
+                    "model_used": model_to_use,
+                    "refined_prompt": refined_prompt
+                }
         else:
             error_msg = f"Primary model API error: {response.status_code}"
             print(error_msg)
