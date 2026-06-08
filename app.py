@@ -73,7 +73,8 @@ def get_available_models():
 
 def refine_prompt(original_prompt, word_count, model_name=None):
     """
-    Refine the original prompt to get better AI response using the specified model
+    Review the original prompt and provide expert novelist suggestions for improvement.
+    Returns the original prompt with suggestions, not an enhanced prompt.
     """
     # Get LMStudio base URL from config
     host = config['lmstudio']['host']
@@ -82,21 +83,20 @@ def refine_prompt(original_prompt, word_count, model_name=None):
     # Base URL for LMStudio API at specific IP address
     lmstudio_url = f"http://{host}:{port}/v1/chat/completions"
     
-    # Create a prompt that asks AI to improve/expand the original prompt
-    refinement_prompt = f"""
-    Please enhance and expand the following story prompt to make it more specific, 
-    engaging, and suitable for generating a story of approximately {word_count} words:
-    
-    Original prompt: "{original_prompt}"
-    
-    Make sure the refined prompt includes details about:
-    - Main characters or setting
-    - Story conflict or challenge
-    - Desired tone (mystery, adventure, romance, etc.)
-    - Any specific elements that should be included in the story
-    
-    Return only the enhanced prompt.
-    """
+    # Create a prompt that asks AI to review and suggest improvements (not to enhance the prompt itself)
+    refinement_prompt = f"""You are a renowned expert novelist. Review the following story prompt and provide constructive suggestions that would help make the generated story better:
+
+Original prompt: "{original_prompt}"
+
+Analyze this prompt and provide:
+1. Strengths of the prompt
+2. Areas for improvement
+3. Specific suggestions for making it more engaging and detailed
+4. Questions to consider for better story development
+
+Format your feedback as helpful guidance that the user could optionally incorporate, but DO NOT rewrite or enhance the prompt itself. Keep your feedback concise and actionable.
+
+Return your expert review and suggestions:"""
     
     try:
         # Use the specified model for refinement if provided, otherwise use default gemma model
@@ -110,15 +110,16 @@ def refine_prompt(original_prompt, word_count, model_name=None):
                     {"role": "user", "content": refinement_prompt}
                 ],
                 "temperature": 0.7,
-                "max_tokens": 200,
+                "max_tokens": 300,  # More tokens for detailed feedback
             },
             timeout=config['application']['timeout']
         )
         
         if response.status_code == 200:
             result = response.json()
-            refined_prompt = result['choices'][0]['message']['content'].strip()
-            return refined_prompt
+            suggestions = result['choices'][0]['message']['content'].strip()
+            # Return the original prompt with the suggestions appended
+            return f"{original_prompt}\n\n--- Expert Novelist Suggestions ---\n{suggestions}"
         else:
             print(f"Error refining prompt: {response.status_code}")
             return original_prompt
