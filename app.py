@@ -110,7 +110,7 @@ Provide exactly 4-6 bullet points with specific suggestions. Do NOT write explan
                     {"role": "user", "content": refinement_prompt}
                 ],
                 "temperature": 0.7,
-                "max_tokens": 300,  # More tokens for detailed feedback
+                "max_tokens": 400,  # Ensure enough tokens for suggestions + thinking
             },
             timeout=config['application']['timeout']  # Use configured timeout (5 minutes)
         )
@@ -124,35 +124,30 @@ Provide exactly 4-6 bullet points with specific suggestions. Do NOT write explan
                 raw_content = message.get('content', '') or message.get('reasoning_content', '') or 'No suggestions available'
                 raw_content = raw_content.strip()
                 
-                # Clean up thinking/analysis sections if present
-                if 'thinking' in raw_content.lower() or 'thinking process' in raw_content.lower():
-                    # Try to extract just the suggestions/story part
+# Clean up thinking/analysis sections - extract everything AFTER "thinking process"
+                if raw_content:
                     lines = raw_content.split('\n')
-                    clean_lines = []
-                    skip_next = False
+                    
+                    # Find where the thinking ends and real content begins
                     for i, line in enumerate(lines):
-                        # Skip thinking/analysis lines
-                        if any(x in line.lower() for x in ['thinking', 'thinking process', '*', '**', 'step ', 'process:', 'analyze']):
-                            skip_next = True
-                            continue
-                        elif skip_next and (line.strip().startswith('-') or not line.strip()):
-                            skip_next = False
-                            continue
-                        elif skip_next and i > 0 and lines[i-1].strip():
-                            skip_next = False
-                        clean_lines.append(line)
-                    raw_content = '\n'.join(clean_lines).strip()
-                    # If still contains thinking markers, take everything after the last thinking section
-                    if clean_lines and any(x in '\n'.join(clean_lines).lower() for x in ['thinking', 'thinking process']):
-                        # Find the last analysis/thinking line and take everything after
-                        for i in range(len(lines)-1, -1, -1):
-                            if any(x in lines[i].lower() for x in ['thinking', 'thinking process', 'analyze']):
+                        if 'thinking process' in line.lower():
+                            # Take everything AFTER this line (skip thinking)
+                            if i + 1 < len(lines):
                                 raw_content = '\n'.join(lines[i+1:]).strip()
+                            break
+                    
+                    # If we still have content, try to find story start
+                    if raw_content and ('here\'s' in raw_content.lower() or 'story' in raw_content.lower()):
+                        for i, line in enumerate(lines):
+                            if 'here\'s' in line.lower() or 'the story' in line.lower():
+                                raw_content = '\n'.join(lines[i:]).strip()
                                 break
+                    
+                    suggestions = raw_content if raw_content else 'No suggestions available'
+                else:
+                    suggestions = 'No suggestions available'
                 
-                suggestions = raw_content if raw_content else 'No suggestions available'
                 print(f"Refinement suggestions received: {suggestions[:100]}...")
-                # Return the original prompt with the suggestions appended
                 return f"{original_prompt}\n\n--- Expert Novelist Suggestions ---\n{suggestions}"
             else:
                 print(f"Unexpected response structure: {result}")
@@ -205,7 +200,7 @@ Exactly {word_count} words:"""
                     {"role": "user", "content": story_prompt}
                 ],
                 "temperature": 0.7,
-                "max_tokens": int(word_count * 1.5),  # Estimate tokens needed
+                "max_tokens": max(500, int(word_count * 2)),  # Ensure enough tokens for story + thinking
             },
             timeout=config['application']['timeout']
         )
@@ -221,33 +216,21 @@ Exactly {word_count} words:"""
                 raw_content = message.get('content', '') or message.get('reasoning_content', '') or 'No story generated'
                 raw_content = raw_content.strip()
                 
-                # Clean up thinking/analysis sections if present
+                # Aggressive cleanup to extract only story content
                 if raw_content:
                     lines = raw_content.split('\n')
-                    clean_lines = []
-                    story_started = False
                     
+                    # Find where the thinking process ends and story begins
                     for i, line in enumerate(lines):
-                        line_lower = line.lower()
-                        
-                        # Skip clear thinking/analysis markers
-                        if any(x in line_lower for x in ['thinking', 'thinking process', 'brainstorm', 'analyze the', 'step :', 'goal:', 'premise:', 'the boy:', 'the sword:']):
-                            continue
-                        
-                        # Look for story beginning indicators
-                        elif any(x in line_lower for x in ['leo', 'the boy', 'he ', 'she ', 'they ', 'suddenly', 'as he', 'meanwhile', 'once upon', 'in the', 'it was', 'there was', 'long ago']):
-                            story_started = True
-                            clean_lines.append(line)
-                        
-                        # Include lines that look like story content
-                        elif story_started or (line.strip() and len(line.strip()) > 30 and not any(x in line_lower for x in ['*', 'reasoning', 'process', 'step', 'goal'])):
-                            clean_lines.append(line)
+                        if 'thinking process' in line.lower() and i + 1 < len(lines):
+                            # Take everything AFTER the thinking process line
+                            raw_content = '\n'.join(lines[i+1:]).strip()
+                            break
                     
-                    # If we found story content, use it
-                    if clean_lines and any(x in '\n'.join(clean_lines).lower() for x in ['leo', 'boy', 'magic', 'sword', 'suddenly', 'he ', 'she ', 'they ', 'long ago']):
-                        raw_content = '\n'.join(clean_lines).strip()
-                
-                story_text = raw_content if raw_content else 'No story generated'
+                    story_text = raw_content if raw_content else 'No story generated'
+                else:
+                    story_text = 'No story generated'
+                    
                 print(f"Story generated successfully, length: {len(story_text)} chars")
                 
                 # Count actual words in the generated story
