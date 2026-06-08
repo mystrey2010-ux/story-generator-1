@@ -156,14 +156,11 @@ def generate_story(original_prompt, word_count, selected_model=None):
     
     # Create the story generation prompt with the ORIGINAL prompt (not the refined one)
     # This ensures we generate a story based on what the user actually requested
-    story_prompt = f"""Generate a creative story about '{original_prompt}' with exactly {word_count} words. Make it engaging and well-structured.
-    
-    Important: 
-    - The story must be as close to exactly {word_count} words as possible
-    - Do not exceed {word_count + 20} words (allowing for some flexibility)
-    - Format the story with clear paragraphs
-    - Ensure proper grammar, spelling, and punctuation throughout
-    """
+    story_prompt = f"""Write ONLY the story now - no thinking, no analysis. Just the story:
+
+{original_prompt}
+
+Exactly {word_count} words. Begin the story immediately:"""
     
     print(f"Starting story generation with model: {selected_model or GEMMA_MODEL}")
     print(f"Prompt: {original_prompt[:50]}...")
