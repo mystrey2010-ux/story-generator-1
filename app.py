@@ -117,7 +117,7 @@ Do NOT rewrite the prompt. Only provide feedback. Keep your entire response unde
                 "temperature": 0.7,
                 "max_tokens": 300,  # More tokens for detailed feedback
             },
-            timeout=30  # Shorter timeout for quick feedback
+            timeout=config['application']['timeout']  # Use configured timeout (5 minutes)
         )
         
         if response.status_code == 200:
