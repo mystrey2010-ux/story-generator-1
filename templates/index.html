@@ -101,6 +101,7 @@
             const output = document.getElementById('story-output');
             const refinedSection = document.getElementById('refined-prompt-section');
             const refinedDisplay = document.getElementById('refined-prompt-display');
+            const selectedModel = document.getElementById('model-select').value;
             
             if (!prompt) {
                 output.innerHTML = '<div class="error">Please enter a prompt to refine</div>';
@@ -117,7 +118,8 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        prompt: prompt
+                        prompt: prompt,
+                        model: selectedModel
                     })
                 });
                 

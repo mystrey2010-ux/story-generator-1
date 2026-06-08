@@ -29,13 +29,6 @@ This is a Flask web application that generates stories using AI models via LMStu
   - Application configuration (host, port, timeout)
 
 ## Data Flow
-1. User accesses web interface at `/`
-2. Frontend calls `/models` to populate model dropdown
-3. User submits story prompt and parameters
-4. Application calls `/generate` endpoint
-5. Application refines prompt using selected model or default gemma model
-6. Application generates story using selected model or fallback gemma model
-7. Response returned to user with generated story, actual word count, model used, and refined prompt
 
 ## API Endpoints
 - `GET /`: Serve main web interface
@@ -43,7 +36,7 @@ This is a Flask web application that generates stories using AI models via LMStu
 - `POST /generate`: Generate story from prompt and parameters
 
 ## Configuration
-- Default AI model: `google/gemma-4-e4b@q4_k_m`
+- Default AI model: Configurable via config.json
 - Host: `0.0.0.0` (accessible from external hosts)
 - Port: `5000`
 - Timeout: 300 seconds (5 minutes) for API calls

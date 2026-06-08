@@ -17,20 +17,20 @@ The Story Generator Flask application is functional and ready for use. It provid
 - Reduced shell scripts to only run.sh
 
 ## Known Limitations
-- Hardcoded LMStudio IP address may not work in all environments (though now configurable via config.json)
+- IP address configuration may need adjustment for different environments
 - Fallback mechanism could be improved with different model
 - No automatic model refresh in UI
 
 ## Next Steps
-1. Test connectivity to LMStudio server at `192.168.50.2:1234`
-2. Verify that the specific gemma model is available in LMStudio
+1. Test connectivity to LMStudio server
+2. Verify that the default model is available in LMStudio
 3. Test basic Flask application functionality
 4. Validate Windows 11 host access via WSL
 
 ## Dependencies
 - Python 3.9+ 
-- Conda environment `story-generator-1` with Flask and requests packages
-- LMStudio server running at `192.168.50.2:1234` with required model
+- Conda environment with Flask and requests packages
+- LMStudio server running with required model
 - Accessible from WSL network
 
 ## Configuration

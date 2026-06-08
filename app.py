@@ -2,14 +2,32 @@ from flask import Flask, render_template, request, jsonify
 import requests
 import re
 import json
+import os
 
 app = Flask(__name__)
+
+# Load environment variables from .env file
+env_file = '.env'
+if os.path.exists(env_file):
+    with open(env_file, 'r') as f:
+        for line in f:
+            if line.strip() and not line.startswith('#') and '=' in line:
+                key, value = line.strip().split('=', 1)
+                os.environ[key] = value
 
 # Load configuration from config.json
 with open('config.json', 'r') as f:
     config = json.load(f)
 
-# Configuration for AI models - using the specific gemma model as requested
+# Override LMStudio host/port from environment variables if available
+if os.getenv('LMSTUDIO_HOST'):
+    config['lmstudio']['host'] = os.getenv('LMSTUDIO_HOST')
+if os.getenv('LMSTUDIO_PORT'):
+    config['lmstudio']['port'] = os.getenv('LMSTUDIO_PORT')
+if os.getenv('LMSTUDIO_API_VERSION'):
+    config['lmstudio']['api_version'] = os.getenv('LMSTUDIO_API_VERSION')
+
+# Configuration for AI models
 GEMMA_MODEL = config['default_model']
 
 def get_available_models():
@@ -257,12 +275,13 @@ def refine():
     try:
         data = request.get_json()
         prompt = data.get('prompt', '')
+        selected_model = data.get('model')
         
         if not prompt:
             return jsonify({'error': 'Prompt is required'}), 400
         
-        # Refine the prompt using the default gemma model (or first available)
-        refined = refine_prompt(prompt, 100)  # word_count not used for refinement
+        # Refine the prompt using the selected model or default
+        refined = refine_prompt(prompt, 100, selected_model)  # word_count not used for refinement
         
         return jsonify({
             'refined_prompt': refined
