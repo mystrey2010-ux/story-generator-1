@@ -84,23 +84,18 @@ def refine_prompt(original_prompt, word_count, model_name=None):
     lmstudio_url = f"http://{host}:{port}/v1/chat/completions"
     
     # Create a prompt that asks AI to review and suggest improvements (not to enhance the prompt itself)
-    refinement_prompt = f"""You are a renowned expert novelist reviewing a story prompt for a student writer. Analyze the following prompt and provide constructive suggestions that would help make their story better:
+    refinement_prompt = f"""You are a renowned expert novelist. Review this story prompt and provide ONLY a bullet list of improvements:
 
-Original prompt: "{original_prompt}"
+"{original_prompt}"
 
-Provide your expert feedback in this exact format:
+Provide exactly 4-6 bullet points with specific suggestions. Do NOT write explanations or thinking. Just list what would make this prompt better:
 
-STRENGTHS:
-- Point out what works well in this prompt
-
-AREAS FOR IMPROVEMENT:
-- Suggest specific ways to make the prompt more engaging
-
-SUGGESTIONS:
-- Recommend concrete details to add (characters, setting, conflict, tone)
-- Keep suggestions brief and actionable
-
-Do NOT rewrite the prompt. Only provide feedback. Keep your entire response under 200 words.
+- [Suggestion 1 for improving the prompt]
+- [Suggestion 2 for adding detail]
+- [Suggestion 3 for character/setting/conflict]
+- [Suggestion 4 for tone/engagement]
+- [Suggestion 5 - optional]
+- [Suggestion 6 - optional]
 """
     
     try:
