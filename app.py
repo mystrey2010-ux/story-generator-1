@@ -182,13 +182,13 @@ def generate_story(original_prompt, word_count, selected_model=None):
     # First step: refine the prompt using the selected model or default gemma model for clarity/grammar
     refined_prompt = refine_prompt(original_prompt, word_count, selected_model)
     
-    # Create the story generation prompt with the ORIGINAL prompt (not the refined one)
+# Create the story generation prompt with the ORIGINAL prompt (not the refined one)
     # This ensures we generate a story based on what the user actually requested
-    story_prompt = f"""Write ONLY the story now - no thinking, no analysis. Just the story:
+    story_prompt = f"""Write ONLY the story text now. No thinking, no analysis. Just the creative story:
 
 {original_prompt}
 
-Exactly {word_count} words. Begin the story immediately:"""
+Exactly {word_count} words:"""
     
     print(f"Starting story generation with model: {selected_model or GEMMA_MODEL}")
     print(f"Prompt: {original_prompt[:50]}...")
@@ -222,28 +222,30 @@ Exactly {word_count} words. Begin the story immediately:"""
                 raw_content = raw_content.strip()
                 
                 # Clean up thinking/analysis sections if present
-                if 'thinking' in raw_content.lower() or 'thinking process' in raw_content.lower():
+                if raw_content:
                     lines = raw_content.split('\n')
                     clean_lines = []
-                    skip_mode = False
+                    story_started = False
+                    
                     for i, line in enumerate(lines):
-                        # Detect thinking mode
-                        if any(x in line.lower() for x in ['thinking', 'thinking process', 'analyze', 'step :']):
-                            skip_mode = True
+                        line_lower = line.lower()
+                        
+                        # Skip clear thinking/analysis markers
+                        if any(x in line_lower for x in ['thinking', 'thinking process', 'brainstorm', 'analyze the', 'step :', 'goal:', 'premise:', 'the boy:', 'the sword:']):
                             continue
-                        # Look for transition to actual content (usually after thinking)
-                        elif skip_mode and line.strip() and len(line.strip()) > 20:
-                            skip_mode = False
+                        
+                        # Look for story beginning indicators
+                        elif any(x in line_lower for x in ['leo', 'the boy', 'he ', 'she ', 'they ', 'suddenly', 'as he', 'meanwhile', 'once upon', 'in the', 'it was', 'there was', 'long ago']):
+                            story_started = True
                             clean_lines.append(line)
-                        elif not skip_mode:
+                        
+                        # Include lines that look like story content
+                        elif story_started or (line.strip() and len(line.strip()) > 30 and not any(x in line_lower for x in ['*', 'reasoning', 'process', 'step', 'goal'])):
                             clean_lines.append(line)
-                    raw_content = '\n'.join(clean_lines).strip()
-                    # If still has thinking content at start, try to find story beginning
-                    if clean_lines and any(x in '\n'.join(clean_lines[:3]).lower() for x in ['thinking', 'analyze']):
-                        for i in range(len(lines)):
-                            if 'story' in lines[i].lower() or (i > 2 and lines[i].strip() and len(lines[i].strip()) > 30):
-                                raw_content = '\n'.join(lines[i:]).strip()
-                                break
+                    
+                    # If we found story content, use it
+                    if clean_lines and any(x in '\n'.join(clean_lines).lower() for x in ['leo', 'boy', 'magic', 'sword', 'suddenly', 'he ', 'she ', 'they ', 'long ago']):
+                        raw_content = '\n'.join(clean_lines).strip()
                 
                 story_text = raw_content if raw_content else 'No story generated'
                 print(f"Story generated successfully, length: {len(story_text)} chars")
