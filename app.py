@@ -272,22 +272,24 @@ def generate():
 @app.route('/refine', methods=['POST'])
 def refine():
     """Refine a prompt for better grammar, spelling and clarity"""
+    prompt = ''
     try:
         data = request.get_json()
         prompt = data.get('prompt', '')
         selected_model = data.get('model')
         
         if not prompt:
-            return jsonify({'error': 'Prompt is required'}), 400
+            return jsonify({'error': 'Prompt is required', 'refined_prompt': ''}), 400
         
         # Refine the prompt using the selected model or default
         refined = refine_prompt(prompt, 100, selected_model)  # word_count not used for refinement
         
         return jsonify({
-            'refined_prompt': refined
+            'refined_prompt': refined or prompt  # Fallback to original if refinement fails
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error in /refine endpoint: {str(e)}")
+        return jsonify({'error': str(e), 'refined_prompt': prompt}), 500
 
 if __name__ == '__main__':
     # Ensure the application is accessible from Windows host

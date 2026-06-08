@@ -127,17 +127,19 @@
                 
                 if (response.ok) {
                     // Display the refined prompt
-                    refinedDisplay.value = data.refined_prompt;
+                    refinedDisplay.value = data.refined_prompt || 'No refined prompt generated';
                     refinedSection.style.display = 'block';
                     
                     // Store the refined prompt for later use
-                    document.getElementById('refined-prompt-hidden').value = data.refined_prompt;
+                    document.getElementById('refined-prompt-hidden').value = data.refined_prompt || '';
                 } else {
-                    output.innerHTML = '<div class="error">Error: ' + data.error + '</div>';
+                    output.innerHTML = '<div class="error">Error: ' + (data.error || 'Failed to refine prompt') + '</div>';
+                    console.error('Refine error:', data);
                 }
             } catch (error) {
                 output.innerHTML = '<div class="error">Error: Failed to refine prompt. Please check your connection.</div>';
                 console.error('Error:', error);
+                console.log('Response status:', response ? response.status : 'No response');
             }
         });
         
