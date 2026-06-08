@@ -125,8 +125,10 @@ Do NOT rewrite the prompt. Only provide feedback. Keep your entire response unde
             # Handle different response structures
             if 'choices' in result and len(result['choices']) > 0:
                 message = result['choices'][0].get('message', {})
-                suggestions = message.get('content', 'No suggestions available')
-                print(f"Refinement suggestions received: {str(suggestions)[:100]}...")
+                # Check for content first, then reasoning_content (some models use this)
+                suggestions = message.get('content', '') or message.get('reasoning_content', 'No suggestions available')
+                suggestions = suggestions.strip() if suggestions else 'No suggestions available'
+                print(f"Refinement suggestions received: {suggestions[:100]}...")
                 # Return the original prompt with the suggestions appended
                 return f"{original_prompt}\n\n--- Expert Novelist Suggestions ---\n{suggestions}"
             else:
@@ -195,7 +197,9 @@ def generate_story(original_prompt, word_count, selected_model=None):
             # Handle different response structures
             if 'choices' in result and len(result['choices']) > 0:
                 message = result['choices'][0].get('message', {})
-                story_text = message.get('content', 'No story generated')
+                # Check for content first, then reasoning_content (some models use this)
+                story_text = message.get('content', '') or message.get('reasoning_content', 'No story generated')
+                story_text = story_text.strip() if story_text else 'No story generated'
                 print(f"Story generated successfully, length: {len(story_text)} chars")
                 
                 # Count actual words in the generated story
