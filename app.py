@@ -40,20 +40,9 @@ def chat():
             result = response.json()
             message = result['choices'][0]['message']
             
-            # Get both fields
-            content = message.get('content', '')
-            reasoning_content = message.get('reasoning_content', '')
-            
-            # Handle case where model returns actual output in reasoning_content (not in content)
-            # This happens with some reasoning models
-            if not content and reasoning_content:
-                # Extract the actual final output from reasoning_content
-                lines = reasoning_content.split('\n')
-                for i, line in enumerate(lines):
-                    if 'thinking process' in line.lower() and i + 1 < len(lines):
-                        # Take everything after thinking process as final output
-                        content = '\n'.join(lines[i+1:]).strip()
-                        break
+            # Get both fields - content has the actual story!
+            content = message.get('content', '').strip()
+            reasoning_content = message.get('reasoning_content', '').strip()
             
             return jsonify({
                 'original_prompt': prompt,
