@@ -1,45 +1,41 @@
 # Story Generator Application Architecture
 
 ## Overview
-This is a Flask web application that generates stories using AI models via LMStudio API. The application provides a web interface for users to enter story prompts and target word counts, then generates stories using configured AI models.
+A simple Flask web application that sends prompts to a QWEN LLM model running on LMStudio and displays the response with clear section separation.
 
 ## Components
 
 ### Main Application
 - `app.py`: Core Flask application with:
   - Web interface rendering (`/`)
-  - Model listing endpoint (`/models`) 
-  - Story generation endpoint (`/generate`)
-  - LMStudio API integration for model discovery and story generation
-  - Fallback mechanism using specific gemma model
-  - Configuration loading from config.json
+  - Chat endpoint (`/chat`)
+  - LMStudio API integration
+  - Clear separation of analysis and output sections
 
 ### User Interface
-- `templates/index.html`: HTML form with:
-  - Story prompt input
-  - Model selection dropdown (populated via `/models` endpoint)
-  - Word count selector
-  - Generate button
-  - Display of refined prompt used for generation
-
-### Configuration
-- `config.json`: External configuration file containing:
-  - LMStudio host and port settings
-  - Default AI model specification
-  - Application configuration (host, port, timeout)
+- `templates/index.html`: Simple interface with:
+  - Prompt input textarea
+  - Send button
+  - Three clearly separated display sections:
+    - Your Prompt
+    - Analysis / Thinking Process
+    - Final Output
 
 ## Data Flow
+1. User enters prompt in textarea
+2. User clicks Send button
+3. Application sends prompt to LMStudio API
+4. Response is parsed into sections
+5. All sections displayed with clear visual separation
 
-## API Endpoints
-- `GET /`: Serve main web interface
-- `GET /models`: List available LMStudio models
-- `POST /generate`: Generate story from prompt and parameters
+## API Endpoint
+- `POST /chat`: Send prompt and receive structured response
 
 ## Configuration
-- Default AI model: Configurable via config.json
-- Host: `0.0.0.0` (accessible from external hosts)
-- Port: `5000`
-- Timeout: 300 seconds (5 minutes) for API calls
+- Model: `qwen3.5-4b-nsfw-ara-heretic-literotica-i1`
+- Host: Configurable via `LMSTUDIO_HOST` environment variable
+- Port: Configurable via `LMSTUDIO_PORT` environment variable
 
 ## Environment Setup
-- `run.sh`: Script to activate conda environment and run the Flask application
+- `.env` file for sensitive configuration
+- `.env.example` for setup guidance
