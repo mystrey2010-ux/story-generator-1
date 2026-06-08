@@ -35,6 +35,8 @@ A simple Flask web application that sends prompts to a QWEN LLM model running on
 - Model: `qwen3.5-4b-nsfw-ara-heretic-literotica-i1`
 - Host: Configurable via `LMSTUDIO_HOST` environment variable
 - Port: Configurable via `LMSTUDIO_PORT` environment variable
+- Max tokens: 262144 (full context length)
+- Timeout: 300 seconds (5 minutes)
 
 ## Environment Setup
 - `.env` file for sensitive configuration

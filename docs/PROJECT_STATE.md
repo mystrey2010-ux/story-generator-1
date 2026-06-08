@@ -12,6 +12,7 @@ Simple chat application ready for testing. Displays LMStudio API responses with 
 - Complete rebuild of application
 - Simplified to basic chat functionality
 - Added clear section separation
+- Updated max_tokens to 262144 (full context)
 
 ## Dependencies
 - Python 3.9+
@@ -22,5 +23,5 @@ Simple chat application ready for testing. Displays LMStudio API responses with 
 
 ## Next Steps
 1. Test connectivity to LMStudio
-2. Verify model availability
-3. Test prompt submission and response display
+2. Verify model produces complete responses
+3. Test response time with 262144 max_tokens

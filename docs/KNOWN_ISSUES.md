@@ -4,11 +4,12 @@
 - Requires LMStudio running at configured IP address (default: 192.168.50.2)
 - May timeout on slow systems (5 minute timeout configured)
 
-## Model Availability
-- Requires specific model: `qwen3.5-4b-nsfw-ara-heretic-literotica-i1`
-- Model must be loaded in LMStudio
+## Model Behavior
+- Model uses extensive reasoning/thinking mode
+- `content` field may be empty for complex prompts
+- `reasoning_content` contains both analysis and final output
 
-## Response Fields
-- Some models return responses in `reasoning_content` instead of `content`
-- Both fields displayed - one may be empty
-- No filtering applied to response text
+## Token Usage
+- max_tokens set to 262144 (full context)
+- May result in very long response times
+- Ensure adequate timeout configured
