@@ -1,241 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Story Generator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chat App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f5f5f5;
         }
-        .form-group {
-            margin-bottom: 15px;
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+        h1 {
+            color: #333;
+            text-align: center;
         }
-        textarea, input, select {
+        textarea, button {
             width: 100%;
             padding: 10px;
+            margin: 10px 0;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 5px;
             box-sizing: border-box;
         }
+        textarea {
+            height: 100px;
+        }
         button {
-            background-color: #007bff;
+            background-color: #4CAF50;
             color: white;
-            border: none;
-            padding: 10px 15px;
+            font-size: 16px;
             cursor: pointer;
-            margin-right: 10px;
         }
         button:hover {
-            background-color: #0056b3;
+            background-color: #45a049;
+        }
+        .section {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .prompt {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196F3;
+        }
+        .analysis {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+        .output {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4CAF50;
         }
         .error {
-            color: red;
-            padding: 10px;
-            background-color: #ffe6e6;
-            border-radius: 4px;
-            margin-bottom: 15px;
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            color: #c62828;
         }
-        #loading {
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .loading {
             display: none;
+            text-align: center;
+            margin: 20px 0;
         }
     </style>
 </head>
 <body>
-    <h1>Story Generator</h1>
-    
-    <form id="story-form">
-        <div class="form-group">
-            <label for="prompt">Story Prompt:</label>
-            <textarea id="prompt" name="prompt" placeholder="Enter your story prompt here..." required></textarea>
+    <div class="container">
+        <h1>Simple Chat with QWEN Model</h1>
+        
+        <textarea id="prompt" placeholder="Enter your prompt here..."></textarea>
+        <button onclick="sendPrompt()">Send to LMStudio</button>
+        
+        <div class="loading" id="loading">Processing...</div>
+        
+        <div id="prompt-section" class="section prompt" style="display: none;">
+            <h2>Your Prompt:</h2>
+            <p id="original-prompt"></p>
         </div>
         
-        <div class="form-group">
-            <button type="button" id="refine-btn">Refine Prompt</button>
-            <button type="button" id="generate-btn">Generate Story</button>
+        <div id="analysis-section" class="section analysis" style="display: none;">
+            <h2>Analysis / Thinking Process:</h2>
+            <pre id="analysis-content" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
         </div>
         
-        <div class="form-group" id="refined-prompt-section" style="display: none;">
-            <label for="refined-prompt-display">Refined Prompt:</label>
-            <textarea id="refined-prompt-display" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; height: 100px;"></textarea>
-            <div style="margin-top: 10px;">
-                <input type="checkbox" id="use-refined-prompt">
-                <label for="use-refined-prompt">Use refined prompt for story generation</label>
-            </div>
+        <div id="output-section" class="section output" style="display: none;">
+            <h2>Final Output:</h2>
+            <pre id="final-output" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
         </div>
-        
-        <div class="form-group">
-            <label for="model-select">Select AI Model:</label>
-            <select id="model-select" name="model" required>
-                <option value="">Loading available models...</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="word-count">Target Word Count:</label>
-            <input type="number" id="word-count" name="word_count" value="100" min="10" max="5000" required>
-        </div>
-        
-        <!-- Hidden field to store the refined prompt -->
-        <input type="hidden" id="refined-prompt-hidden" name="refined-prompt">
-    </form>
-    
-    <div id="loading">Generating story...</div>
-    
-    <div id="story-output"></div>
+    </div>
 
     <script>
-        // Load models when page loads
-        loadModels();
-        
-        // Handle refine button click
-        document.getElementById('refine-btn').addEventListener('click', async function() {
+        async function sendPrompt() {
             const prompt = document.getElementById('prompt').value;
-            const output = document.getElementById('story-output');
-            const refinedSection = document.getElementById('refined-prompt-section');
-            const refinedDisplay = document.getElementById('refined-prompt-display');
-            const selectedModel = document.getElementById('model-select').value;
+            const loading = document.getElementById('loading');
             
             if (!prompt) {
-                output.innerHTML = '<div class="error">Please enter a prompt to refine</div>';
+                alert('Please enter a prompt');
                 return;
             }
             
-            // Clear previous results
-            output.innerHTML = '';
-            
-            try {
-                const response = await fetch('/refine', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        model: selectedModel
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Display the refined prompt
-                    refinedDisplay.value = data.refined_prompt || 'No refined prompt generated';
-                    refinedSection.style.display = 'block';
-                    
-                    // Store the refined prompt for later use
-                    document.getElementById('refined-prompt-hidden').value = data.refined_prompt || '';
-                } else {
-                    output.innerHTML = '<div class="error">Error: ' + (data.error || 'Failed to refine prompt') + '</div>';
-                    console.error('Refine error:', data);
-                }
-            } catch (error) {
-                output.innerHTML = '<div class="error">Error: Failed to refine prompt. Please check your connection.</div>';
-                console.error('Error:', error);
-                console.log('Response status:', response ? response.status : 'No response');
-            }
-        });
-        
-        // Handle generate button click
-        document.getElementById('generate-btn').addEventListener('click', async function() {
-            const prompt = document.getElementById('prompt').value;
-            const wordCount = document.getElementById('word-count').value;
-            const selectedModel = document.getElementById('model-select').value;
-            const output = document.getElementById('story-output');
-            const loading = document.getElementById('loading');
-            const useRefinedPrompt = document.getElementById('use-refined-prompt').checked;
-            const refinedPromptHidden = document.getElementById('refined-prompt-hidden').value;
-            
-            // Determine which prompt to use
-            let finalPrompt = prompt;
-            if (useRefinedPrompt && refinedPromptHidden) {
-                finalPrompt = refinedPromptHidden;
-            }
-            
-            if (!finalPrompt) {
-                output.innerHTML = '<div class="error">Please enter a prompt</div>';
-                return;
-            }
-            
-            // Clear previous results
-            output.innerHTML = '';
-            
-            // Show loading indicator
             loading.style.display = 'block';
             
             try {
-                const response = await fetch('/generate', {
+                const response = await fetch('/chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        prompt: finalPrompt,
-                        word_count: parseInt(wordCount),
-                        model: selectedModel
-                    })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt: prompt})
                 });
                 
                 const data = await response.json();
-                
-                // Hide loading indicator
                 loading.style.display = 'none';
                 
                 if (response.ok) {
-                    output.innerHTML = `
-                        <h2>Your Generated Story:</h2>
-                        <div style="margin-bottom: 15px;">
-                            <label for="actual-word-count" style="display: block; margin-top: 10px;">Actual Word Count:</label>
-                            <input type="text" id="actual-word-count" value="${data.actual_word_count}" readonly style="width: 100%; padding: 5px; background-color: #f0f0f0; border: 1px solid #ccc;">
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label for="model-used" style="display: block; margin-top: 10px;">Model Used:</label>
-                            <input type="text" id="model-used" value="${data.model_used}" readonly style="width: 100%; padding: 5px; background-color: #f0f0f0; border: 1px solid #ccc;">
-                        </div>
-                        <p>${data.story.replace(/\n/g, '<br>')}</p>
-                    `;
+                    // Show prompt section
+                    document.getElementById('original-prompt').textContent = data.original_prompt;
+                    document.getElementById('prompt-section').style.display = 'block';
+                    
+                    // Show analysis section
+                    document.getElementById('analysis-content').textContent = data.analysis;
+                    document.getElementById('analysis-section').style.display = 'block';
+                    
+                    // Show final output section
+                    document.getElementById('final-output').textContent = data.final_output;
+                    document.getElementById('output-section').style.display = 'block';
                 } else {
-                    output.innerHTML = '<div class="error">Error: ' + data.error + '</div>';
+                    document.getElementById('output-section').style.display = 'block';
+                    document.getElementById('output-section').className = 'section error';
+                    document.getElementById('final-output').textContent = 'Error: ' + data.error;
                 }
             } catch (error) {
-                // Hide loading indicator
                 loading.style.display = 'none';
-                output.innerHTML = '<div class="error">Error: Failed to generate story. Please check your connection.</div>';
-                console.error('Error:', error);
+                document.getElementById('output-section').style.display = 'block';
+                document.getElementById('output-section').className = 'section error';
+                document.getElementById('final-output').textContent = 'Error: Failed to connect to LMStudio';
+            }
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('prompt').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendPrompt();
             }
         });
-        
-        function loadModels() {
-            fetch('/models')
-                .then(response => response.json())
-                .then(data => {
-                    const select = document.getElementById('model-select');
-                    if (data.models) {
-                        select.innerHTML = '';
-                        data.models.forEach(model => {
-                            const option = document.createElement('option');
-                            // Handle different model object structures
-                            option.value = model.key || model.id || (typeof model === 'string' ? model : JSON.stringify(model));
-                            option.textContent = model.display_name || model.name || model.id || (typeof model === 'string' ? model : 'Unknown Model');
-                            select.appendChild(option);
-                        });
-                    } else {
-                        select.innerHTML = '<option value="">No models available</option>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading models:', error);
-                    const select = document.getElementById('model-select');
-                    select.innerHTML = '<option value="">Error loading models</option>';
-                });
-        }
     </script>
 </body>
 </html>
