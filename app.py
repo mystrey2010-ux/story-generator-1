@@ -120,9 +120,37 @@ Provide exactly 4-6 bullet points with specific suggestions. Do NOT write explan
             # Handle different response structures
             if 'choices' in result and len(result['choices']) > 0:
                 message = result['choices'][0].get('message', {})
-                # Check for content first, then reasoning_content (some models use this)
-                suggestions = message.get('content', '') or message.get('reasoning_content', 'No suggestions available')
-                suggestions = suggestions.strip() if suggestions else 'No suggestions available'
+                # Get content from whichever field has it
+                raw_content = message.get('content', '') or message.get('reasoning_content', '') or 'No suggestions available'
+                raw_content = raw_content.strip()
+                
+                # Clean up thinking/analysis sections if present
+                if 'thinking' in raw_content.lower() or 'thinking process' in raw_content.lower():
+                    # Try to extract just the suggestions/story part
+                    lines = raw_content.split('\n')
+                    clean_lines = []
+                    skip_next = False
+                    for i, line in enumerate(lines):
+                        # Skip thinking/analysis lines
+                        if any(x in line.lower() for x in ['thinking', 'thinking process', '*', '**', 'step ', 'process:', 'analyze']):
+                            skip_next = True
+                            continue
+                        elif skip_next and (line.strip().startswith('-') or not line.strip()):
+                            skip_next = False
+                            continue
+                        elif skip_next and i > 0 and lines[i-1].strip():
+                            skip_next = False
+                        clean_lines.append(line)
+                    raw_content = '\n'.join(clean_lines).strip()
+                    # If still contains thinking markers, take everything after the last thinking section
+                    if clean_lines and any(x in '\n'.join(clean_lines).lower() for x in ['thinking', 'thinking process']):
+                        # Find the last analysis/thinking line and take everything after
+                        for i in range(len(lines)-1, -1, -1):
+                            if any(x in lines[i].lower() for x in ['thinking', 'thinking process', 'analyze']):
+                                raw_content = '\n'.join(lines[i+1:]).strip()
+                                break
+                
+                suggestions = raw_content if raw_content else 'No suggestions available'
                 print(f"Refinement suggestions received: {suggestions[:100]}...")
                 # Return the original prompt with the suggestions appended
                 return f"{original_prompt}\n\n--- Expert Novelist Suggestions ---\n{suggestions}"
@@ -189,9 +217,35 @@ Exactly {word_count} words. Begin the story immediately:"""
             # Handle different response structures
             if 'choices' in result and len(result['choices']) > 0:
                 message = result['choices'][0].get('message', {})
-                # Check for content first, then reasoning_content (some models use this)
-                story_text = message.get('content', '') or message.get('reasoning_content', 'No story generated')
-                story_text = story_text.strip() if story_text else 'No story generated'
+                # Get content from whichever field has it
+                raw_content = message.get('content', '') or message.get('reasoning_content', '') or 'No story generated'
+                raw_content = raw_content.strip()
+                
+                # Clean up thinking/analysis sections if present
+                if 'thinking' in raw_content.lower() or 'thinking process' in raw_content.lower():
+                    lines = raw_content.split('\n')
+                    clean_lines = []
+                    skip_mode = False
+                    for i, line in enumerate(lines):
+                        # Detect thinking mode
+                        if any(x in line.lower() for x in ['thinking', 'thinking process', 'analyze', 'step :']):
+                            skip_mode = True
+                            continue
+                        # Look for transition to actual content (usually after thinking)
+                        elif skip_mode and line.strip() and len(line.strip()) > 20:
+                            skip_mode = False
+                            clean_lines.append(line)
+                        elif not skip_mode:
+                            clean_lines.append(line)
+                    raw_content = '\n'.join(clean_lines).strip()
+                    # If still has thinking content at start, try to find story beginning
+                    if clean_lines and any(x in '\n'.join(clean_lines[:3]).lower() for x in ['thinking', 'analyze']):
+                        for i in range(len(lines)):
+                            if 'story' in lines[i].lower() or (i > 2 and lines[i].strip() and len(lines[i].strip()) > 30):
+                                raw_content = '\n'.join(lines[i:]).strip()
+                                break
+                
+                story_text = raw_content if raw_content else 'No story generated'
                 print(f"Story generated successfully, length: {len(story_text)} chars")
                 
                 # Count actual words in the generated story
