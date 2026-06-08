@@ -84,19 +84,24 @@ def refine_prompt(original_prompt, word_count, model_name=None):
     lmstudio_url = f"http://{host}:{port}/v1/chat/completions"
     
     # Create a prompt that asks AI to review and suggest improvements (not to enhance the prompt itself)
-    refinement_prompt = f"""You are a renowned expert novelist. Review the following story prompt and provide constructive suggestions that would help make the generated story better:
+    refinement_prompt = f"""You are a renowned expert novelist reviewing a story prompt for a student writer. Analyze the following prompt and provide constructive suggestions that would help make their story better:
 
 Original prompt: "{original_prompt}"
 
-Analyze this prompt and provide:
-1. Strengths of the prompt
-2. Areas for improvement
-3. Specific suggestions for making it more engaging and detailed
-4. Questions to consider for better story development
+Provide your expert feedback in this exact format:
 
-Format your feedback as helpful guidance that the user could optionally incorporate, but DO NOT rewrite or enhance the prompt itself. Keep your feedback concise and actionable.
+STRENGTHS:
+- Point out what works well in this prompt
 
-Return your expert review and suggestions:"""
+AREAS FOR IMPROVEMENT:
+- Suggest specific ways to make the prompt more engaging
+
+SUGGESTIONS:
+- Recommend concrete details to add (characters, setting, conflict, tone)
+- Keep suggestions brief and actionable
+
+Do NOT rewrite the prompt. Only provide feedback. Keep your entire response under 200 words.
+"""
     
     try:
         # Use the specified model for refinement if provided, otherwise use default gemma model
@@ -112,33 +117,35 @@ Return your expert review and suggestions:"""
                 "temperature": 0.7,
                 "max_tokens": 300,  # More tokens for detailed feedback
             },
-            timeout=config['application']['timeout']
+            timeout=30  # Shorter timeout for quick feedback
         )
         
         if response.status_code == 200:
             result = response.json()
             suggestions = result['choices'][0]['message']['content'].strip()
+            print(f"Refinement suggestions received: {suggestions[:100]}...")
             # Return the original prompt with the suggestions appended
             return f"{original_prompt}\n\n--- Expert Novelist Suggestions ---\n{suggestions}"
         else:
             print(f"Error refining prompt: {response.status_code}")
-            return original_prompt
+            # Return a helpful error message
+            return f"{original_prompt}\n\n--- Expert Novelist Suggestions ---\nUnable to connect to AI model for feedback. Please ensure LMStudio is running at {host}:{port}."
             
     except Exception as e:
         print(f"Exception in prompt refinement: {str(e)}")
-        return original_prompt
+        return f"{original_prompt}\n\n--- Expert Novelist Suggestions ---\nError connecting to AI service. Showing your original prompt unchanged."
 
 def generate_story(original_prompt, word_count, selected_model=None):
     """
     Generate a story using AI with the specified prompt and word count.
     First refines the prompt for clarity/grammar, then generates the story using the original prompt.
-    Uses the selected model if provided, otherwise uses the specific gemma model.
+    Uses the selected model if provided, otherwise uses the default model.
     """
     # Get LMStudio base URL from config
     host = config['lmstudio']['host']
     port = config['lmstudio']['port']
     
-    # Base URL for LMStudio API at specific IP address
+    # Base URL for LMStudio API 
     lmstudio_url = f"http://{host}:{port}/v1/chat/completions"
     
     # First step: refine the prompt using the selected model or default gemma model for clarity/grammar
@@ -155,11 +162,13 @@ def generate_story(original_prompt, word_count, selected_model=None):
     - Ensure proper grammar, spelling, and punctuation throughout
     """
     
+    print(f"Starting story generation with model: {selected_model or GEMMA_MODEL}")
+    print(f"Prompt: {original_prompt[:50]}...")
+    
     try:
-        # Use the selected model for story generation if provided, otherwise use the specific gemma model
+        # Use the selected model for story generation if provided, otherwise use the default
         model_to_use = selected_model if selected_model else GEMMA_MODEL
         
-        # Use the specific gemma model for story generation
         response = requests.post(
             lmstudio_url,
             json={
@@ -173,9 +182,12 @@ def generate_story(original_prompt, word_count, selected_model=None):
             timeout=config['application']['timeout']
         )
         
+        print(f"API Response status: {response.status_code}")
+        
         if response.status_code == 200:
             result = response.json()
             story_text = result['choices'][0]['message']['content'].strip()
+            print(f"Story generated successfully, length: {len(story_text)} chars")
             
             # Count actual words in the generated story
             actual_word_count = len(re.findall(r'\b\w+\b', story_text))
@@ -187,50 +199,19 @@ def generate_story(original_prompt, word_count, selected_model=None):
                 "refined_prompt": refined_prompt  # Include the refined prompt that was used for clarity
             }
         else:
-            raise Exception(f"Primary model API error: {response.status_code}")
+            error_msg = f"Primary model API error: {response.status_code}"
+            print(error_msg)
+            raise Exception(error_msg)
             
     except Exception as e:
-        # If there's an error, still use the gemma model for fallback
-        try:
-            print(f"Error in story generation, trying fallback. Error: {str(e)}")
-            response = requests.post(
-                lmstudio_url,
-                json={
-                    "model": GEMMA_MODEL,  # Use the specific gemma model throughout
-                    "messages": [
-                        {"role": "user", "content": story_prompt}
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": int(word_count * 1.5),  # Estimate tokens needed
-                },
-                timeout=config['application']['timeout']
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                story_text = result['choices'][0]['message']['content'].strip()
-                
-                # Count actual words in the generated story
-                actual_word_count = len(re.findall(r'\b\w+\b', story_text))
-                
-                return {
-                    "story": story_text,
-                    "actual_word_count": actual_word_count,
-                    "model_used": GEMMA_MODEL,  # Show that we tried the specific gemma model
-                    "refined_prompt": refined_prompt  # Include the refined prompt that was used for clarity
-                }
-            else:
-                raise Exception(f"Fallback model API error: {response.status_code}")
-                
-        except Exception as fallback_error:
-            error_msg = f"Error generating story with both models: {str(fallback_error)}"
-            print(error_msg)
-            return {
-                "story": error_msg,
-                "actual_word_count": 0,
-                "model_used": GEMMA_MODEL,  # Show that we tried the specific gemma model
-                "refined_prompt": refined_prompt  # Include the refined prompt that was used for clarity
-            }
+        print(f"Error in story generation: {str(e)}")
+        # Provide a helpful error message
+        return {
+            "story": f"Error generating story: {str(e)}. Please ensure LMStudio is running and the selected model is available.",
+            "actual_word_count": 0,
+            "model_used": selected_model or GEMMA_MODEL,
+            "refined_prompt": refined_prompt
+        }
 
 @app.route('/models')
 def get_models():
