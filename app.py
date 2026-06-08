@@ -31,7 +31,7 @@ def chat():
                 "model": MODEL_NAME,
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.7,
-                "max_tokens": 16384  # Use portion of model's 65536 context length
+                "max_tokens": 65536  # Full context length as requested
             },
             timeout=300
         )
