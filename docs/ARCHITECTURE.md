@@ -18,7 +18,7 @@ A simple Flask web application that sends prompts to LLM models running on LMStu
 ### User Interface
 - `templates/index.html`: Simple interface (working) with:
   - Model dropdown selection (populated from LMStudio)
-  - Target Word Count input field
+  - Target Word Count input field (guidance only, not enforced)
   - Prompt input textarea
   - Send button
   - Four display sections:
@@ -29,7 +29,7 @@ A simple Flask web application that sends prompts to LLM models running on LMStu
 
 ## Data Flow
 1. User selects model from dropdown
-2. User enters optional target word count
+2. User enters optional target word count (AI guidance, not limit)
 3. User enters prompt in textarea
 4. User clicks Send button
 5. Application sends prompt to LMStudio API
@@ -47,6 +47,12 @@ A simple Flask web application that sends prompts to LLM models running on LMStu
 - Port: Configurable via `LMSTUDIO_PORT` environment variable
 - Timeout: 300 seconds
 - No max_tokens specified (uses model default)
+
+## Important Notes
+- **Target word count is not enforced** by the AI
+- LLMs generate based on context and prompt instructions
+- Actual word count is calculated from the response text
+- Use word count as guidance, not a strict requirement
 
 ## Environment Setup
 - `.env` file for sensitive configuration
