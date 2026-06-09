@@ -1,35 +1,27 @@
 # Technical Decisions
 
-## Model Selection
-- Dynamic model selection via dropdown
-- Models fetched from LMStudio `/v1/models` endpoint
-- Falls back to default model if API unavailable
+## Chat Memory
+- Flask sessions store chat history
+- System message inserted before user prompts for word count priority
+- History maintained across multiple prompts
+- NEW Chat button clears session explicitly
 - ✅ Working well
 
 ## API Integration
-- No max_tokens parameter (uses model default)
 - Temperature: 0.7 for balanced creativity
-- Timeout: 600 seconds (10 minutes) for long-running requests
-- System message added to emphasize word count priority
-- ⚠️ Note: LLMs do not perfectly enforce target word counts
-
-## Response Handling
-- Display `content` field as Final Output
-- Display `reasoning_content` field as Analysis/Thinking
-- Calculate actual word count from response text
-- Show both target and actual word counts
-- No filtering or processing of responses
+- Timeout: 600 seconds (10 minutes)
+- No max_tokens (uses model default)
+- System message for word count priority
 - ✅ Working well
 
 ## User Interface
-- Model dropdown populated on page load
-- Target Word Count: Suggestion to AI, not enforced
-- Actual Word Count: Programmatic calculation
-- Clean section separation with color coding
+- Webchat-style interface
+- Scrollable chat history
+- CLEAR distinction between user/assistant messages
+- Word count displayed per response
 - ✅ Working well
 
-## Known Limitations
-- LLMs cannot be forced to match exact word counts
-- Target word count is just an instruction in the prompt
-- Actual count will vary significantly from target
-- Best for guidance only
+## Session Management
+- SECRET_KEY required for session security
+- Session data cleared on NEW Chat click
+- Chat persists until explicit clear

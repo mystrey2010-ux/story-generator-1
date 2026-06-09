@@ -1,28 +1,21 @@
 # Project State
 
 ## Current Status
-✅ Enhanced chat application **working well** with all features implemented:
-- Model selection from dropdown
-- Target word count input
-- Actual word count calculation
-- Clear section separation
+✅ Enhanced chat application with full memory and webchat interface.
 
 ## Objectives
-- ✅ Provide simple web interface for chat prompts
-- ✅ Allow model selection from available LMStudio models
-- ✅ Support optional target word count for story generation
-- ✅ Calculate actual word count from response
-- ✅ Display both analysis and final output clearly
+- ✅ Provide webchat interface for LLM interaction
+- ✅ Maintain session-based chat history
+- ✅ NEW Chat button clears session
+- ✅ Word count prioritized via system message
+- ✅ Scrollable chat display
 
 ## Recent Changes
-- ✅ Added actual_word_count to API response
-- ✅ Added Actual Word Count display section in UI
-- ✅ Removed max_tokens (uses model default)
-- ✅ Increased timeout to 600 seconds (10 minutes)
+- ✅ Added chat history with sessions
+- ✅ System message prioritized before prompts
+- ✅ NEW Chat functionality
+- ✅ Upgraded UI to webchat style
+- ✅ Removed separate analysis section for cleaner flow
 
 ## Testing Status
-- ✅ Application tested and working
-- ✅ Model selection functional
-- ✅ Word count targeting working
-- ✅ Actual word count calculation working
-- ✅ Response sections displaying correctly
+- ⏳ Ready for testing chat history functionality

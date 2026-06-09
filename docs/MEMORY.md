@@ -1,21 +1,21 @@
 # Project Memory
 
 ## Key Insights
-- QWEN3.5 model returns responses in `reasoning_content` field
-- `content` field may be empty for complex prompts
-- Both fields displayed as-is without processing
-- No max_tokens ensures model uses full default context
-- Word count calculated as: `len(combined_text.split())`
+- System message BEFORE prompt helps prioritize word count goals
+- Session storage enables multi-turn chat
+- LLM still cannot perfectly enforce word counts
+- Actual count calculated from response text
+- Webchat interface improves UX significantly
 
 ## Configuration Notes
-- Token limit uses model default
-- Response times working well
-- 10-minute timeout (600 seconds) for long generations
-- Model dropdown successfully fetching from LMStudio API
+- SECRET_KEY needed for session security
+- Chat history persists until explicit clear
+- System message approach improves word count targeting
 
-## Features Implemented
+## Features Working
 - ✅ Dynamic model selection
-- ✅ Target word count (AI instruction)
-- ✅ Actual word count (programmatic calculation)
-- ✅ Clean section separation in UI
-- ✅ Robust error handling
+- ✅ Target word count (system priority)
+- ✅ Actual word count calculation
+- ✅ Session-based chat history
+- ✅ NEW Chat button
+- ✅ Scrollable interface

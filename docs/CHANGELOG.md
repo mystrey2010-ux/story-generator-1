@@ -1,27 +1,26 @@
 # Changelog
 
-## [1.2.0] - Added Actual Word Count
+## [1.3.0] - Chat History & Webchat Interface
 
 ### Added
-- Actual Word Count field (programmatically calculated)
-- Displays word count of returned response
-- Updated UI with purple-themed word count section
+- Session-based chat history (persists across prompts)
+- NEW Chat button to clear session
+- Scrollable chat display
+- System message prioritized BEFORE user prompts
+- Word count as system-level priority
 
 ### Changed
-- Removed max_tokens parameter (uses model default)
-- Added model dropdown selection from available LMStudio models
-- Added target word count input field
-- Added `/models` endpoint for dynamic model loading
-- Increased timeout to 600 seconds (10 minutes)
-- Strengthened word count as primary goal via system message
+- Upgraded to webchat-style interface
+- Removed separate analysis section for cleaner chat flow
+- Chat history maintained via Flask sessions
 
-### Status
-✅ All features working well with current implementation
+### Fixed
+- Word count goal now emphasized as system instruction
+
+## [1.2.0] - Added Actual Word Count
+- Programmatic word count calculation
 
 ## [1.1.0] - Enhanced Configuration
-- Model dropdown selection
-- Target Word Count input field
-- `/models` endpoint
+- Model dropdown, word count input
 
 ## [1.0.0] - Simple Chat App Release
-- Initial release

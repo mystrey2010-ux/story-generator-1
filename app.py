@@ -1,12 +1,14 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 import requests
 import os
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Configuration
 LMSTUDIO_HOST = os.getenv('LMSTUDIO_HOST', '192.168.50.2')
 LMSTUDIO_PORT = os.getenv('LMSTUDIO_PORT', '1234')
+MODEL_NAME = 'dirty-muse-writer-v01-uncensored-erotica-nsfw-i1'
 
 def get_available_models():
     """Fetch available models from LMStudio"""
@@ -18,37 +20,50 @@ def get_available_models():
             return [m['id'] for m in models.get('data', [])]
     except Exception:
         pass
-    return ['dirty-muse-writer-v01-uncensored-erotica-nsfw-i1']
+    return [MODEL_NAME]
 
 @app.route('/')
 def index():
     models = get_available_models()
-    return render_template('index.html', models=models)
+    chat_history = session.get('chat_history', [])
+    return render_template('index.html', models=models, chat_history=chat_history)
 
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
         data = request.get_json()
         prompt = data.get('prompt', '')
-        model = data.get('model', 'dirty-muse-writer-v01-uncensored-erotica-nsfw-i1')
+        model = data.get('model', MODEL_NAME)
         word_count = data.get('word_count', '')
+        clear_history = data.get('clear_history', False)
+        
+        if clear_history:
+            session['chat_history'] = []
+            session.modified = True
         
         if not prompt:
             return jsonify({'error': 'No prompt provided'}), 400
         
-        # Append word count instruction if provided - make it a primary goal
+        # Get chat history
+        chat_history = session.get('chat_history', [])
+        
+        # Build messages from history
+        messages = []
+        for msg in chat_history:
+            messages.append({"role": "user", "content": msg['prompt']})
+            if msg.get('response'):
+                messages.append({"role": "assistant", "content": msg['response']})
+        
+        # Add system message with word count goal BEFORE user prompt
         if word_count:
-            prompt = f"{prompt}\n\nIMPORTANT: Aim for approximately {word_count} words total. This is a primary goal for your response length."
-        
-        # Send to LMStudio (no max_tokens - use model default)
-        url = f"http://{LMSTUDIO_HOST}:{LMSTUDIO_PORT}/v1/chat/completions"
-        
-        messages = [{"role": "user", "content": prompt}]
-        
-        # Add system message to emphasize word count goal
-        if word_count:
-            system_msg = f"PRIMARY GOAL: Generate a response of approximately {word_count} words. This is a critical length requirement that should be your main priority when generating content."
+            system_msg = f"IMPORTANT: Aim for approximately {word_count} words total. This is a primary goal for your response length."
             messages.insert(0, {"role": "system", "content": system_msg})
+        
+        # Add current prompt
+        messages.append({"role": "user", "content": prompt})
+        
+        # Send to LMStudio
+        url = f"http://{LMSTUDIO_HOST}:{LMSTUDIO_PORT}/v1/chat/completions"
         
         response = requests.post(
             url,
@@ -67,15 +82,25 @@ def chat():
             content = message.get('content', '').strip()
             reasoning_content = message.get('reasoning_content', '').strip()
             
-            # Calculate actual word count from combined response
             combined_text = content or reasoning_content or ''
             actual_word_count = len(combined_text.split()) if combined_text else 0
+            
+            # Store in history
+            chat_entry = {
+                'prompt': prompt,
+                'response': content,
+                'actual_word_count': actual_word_count
+            }
+            chat_history.append(chat_entry)
+            session['chat_history'] = chat_history
+            session.modified = True
             
             return jsonify({
                 'original_prompt': prompt,
                 'analysis': reasoning_content if reasoning_content else 'No analysis/thinking section',
                 'final_output': content if content else 'No final output received',
-                'actual_word_count': actual_word_count
+                'actual_word_count': actual_word_count,
+                'chat_history': chat_history
             })
         else:
             return jsonify({'error': f'API error: {response.status_code}'}), 500
@@ -87,6 +112,13 @@ def chat():
 def models():
     """Endpoint to get available models"""
     return jsonify({'models': get_available_models()})
+
+@app.route('/clear', methods=['POST'])
+def clear():
+    """Clear chat history"""
+    session['chat_history'] = []
+    session.modified = True
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)

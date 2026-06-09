@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat with LLM Models</title>
+    <title>LLM Chat Interface</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -27,68 +27,104 @@
             gap: 10px;
             margin-bottom: 10px;
         }
-        .controls select, .controls input {
+        .controls select, .controls input, .controls button {
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             flex: 1;
         }
-        textarea, button {
+        textarea {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 5px;
             box-sizing: border-box;
-        }
-        textarea {
             height: 100px;
         }
-        button {
+        button.send-btn {
             background-color: #4CAF50;
             color: white;
             font-size: 16px;
             cursor: pointer;
+            width: auto;
+            flex: 1;
         }
-        button:hover {
-            background-color: #45a049;
+        button.clear-btn {
+            background-color: #f44336;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            width: auto;
         }
-        .section {
+        .chat-container {
             margin-top: 20px;
-            padding: 15px;
-            border-radius: 5px;
         }
-        .prompt {
-            background-color: #e3f2fd;
+        .chat-entry {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #fafafa;
+            border: 1px solid #e0e0e0;
+        }
+        .chat-entry.user {
             border-left: 4px solid #2196F3;
         }
-        .analysis {
-            background-color: #fff3e0;
-            border-left: 4px solid #ff9800;
-        }
-        .output {
-            background-color: #e8f5e9;
+        .chat-entry.assistant {
             border-left: 4px solid #4CAF50;
         }
-        .error {
-            background-color: #ffebee;
-            border-left: 4px solid #f44336;
-            color: #c62828;
-        }
-        h2 {
-            margin-top: 0;
+        .section-header {
+            font-weight: bold;
             color: #333;
+            margin-bottom: 5px;
+        }
+        .prompt-text {
+            background-color: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+        .analysis-text {
+            background-color: #fff3e0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .output-text {
+            background-color: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .word-count-info {
+            background-color: #f3e5f5;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #7b1fa2;
         }
         .loading {
             display: none;
             text-align: center;
             margin: 20px 0;
+            color: #666;
+        }
+        .error-text {
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            color: #c62828;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Chat with LLM Models</h1>
+        <h1>LLM Chat Interface</h1>
         
         <div class="controls">
             <select id="model-select">
@@ -97,31 +133,28 @@
                 {% endfor %}
             </select>
             <input type="number" id="word-count" placeholder="Target Word Count (optional)" min="1">
+            <button class="clear-btn" onclick="newChat()">NEW Chat</button>
         </div>
         
         <textarea id="prompt" placeholder="Enter your prompt here..."></textarea>
-        <button onclick="sendPrompt()">Send to LMStudio</button>
+        <button class="send-btn" onclick="sendPrompt()">Send to LMStudio</button>
         
         <div class="loading" id="loading">Processing...</div>
         
-        <div id="prompt-section" class="section prompt" style="display: none;">
-            <h2>Your Prompt:</h2>
-            <p id="original-prompt"></p>
-        </div>
-        
-        <div id="analysis-section" class="section analysis" style="display: none;">
-            <h2>Analysis / Thinking Process:</h2>
-            <pre id="analysis-content" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
-        </div>
-        
-        <div id="output-section" class="section output" style="display: none;">
-            <h2>Final Output:</h2>
-            <pre id="final-output" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
-        </div>
-        
-        <div id="word-count-section" class="section" style="display: none; background-color: #f3e5f5; border-left: 4px solid #9c27b0;">
-            <h2 style="color: #7b1fa2;">Actual Word Count:</h2>
-            <p id="actual-word-count" style="font-size: 24px; font-weight: bold; margin: 0;"></p>
+        <div class="chat-container" id="chat-container">
+            {% for entry in chat_history %}
+            <div class="chat-entry user">
+                <div class="section-header">Your Prompt:</div>
+                <div class="prompt-text">{{ entry.prompt | e }}</div>
+            </div>
+            {% if entry.response %}
+            <div class="chat-entry assistant">
+                <div class="section-header">Final Output:</div>
+                <pre class="output-text" style="white-space: pre-wrap; word-wrap: break-word;">{{ entry.response | e }}</pre>
+                <div class="word-count-info">Word Count: {{ entry.actual_word_count | int | default(0) | intcomma }}</div>
+            </div>
+            {% endif %}
+            {% endfor %}
         </div>
     </div>
 
@@ -154,34 +187,70 @@
                 loading.style.display = 'none';
                 
                 if (response.ok) {
-                    // Show prompt section
-                    document.getElementById('original-prompt').textContent = data.original_prompt;
-                    document.getElementById('prompt-section').style.display = 'block';
+                    // Clear input
+                    document.getElementById('prompt').value = '';
                     
-                    // Show analysis section
-                    document.getElementById('analysis-content').textContent = data.analysis;
-                    document.getElementById('analysis-section').style.display = 'block';
-                    
-                    // Show final output section
-                    document.getElementById('final-output').textContent = data.final_output;
-                    document.getElementById('output-section').style.display = 'block';
-                    
-                    // Show actual word count
-                    if (data.actual_word_count > 0) {
-                        document.getElementById('actual-word-count').textContent = data.actual_word_count.toLocaleString();
-                        document.getElementById('word-count-section').style.display = 'block';
-                    }
+                    // Append to chat
+                    appendToChat(prompt, data.final_output, data.actual_word_count);
                 } else {
-                    document.getElementById('output-section').style.display = 'block';
-                    document.getElementById('output-section').className = 'section error';
-                    document.getElementById('final-output').textContent = 'Error: ' + data.error;
+                    appendError('Error: ' + data.error);
                 }
             } catch (error) {
                 loading.style.display = 'none';
-                document.getElementById('output-section').style.display = 'block';
-                document.getElementById('output-section').className = 'section error';
-                document.getElementById('final-output').textContent = 'Error: Failed to connect to LMStudio';
+                appendError('Error: Failed to connect to LMStudio');
             }
+        }
+        
+        function appendToChat(prompt, output, wordCount) {
+            const container = document.getElementById('chat-container');
+            
+            // Add user prompt
+            const userDiv = document.createElement('div');
+            userDiv.className = 'chat-entry user';
+            userDiv.innerHTML = `
+                <div class="section-header">Your Prompt:</div>
+                <div class="prompt-text">${escapeHtml(prompt)}</div>
+            `;
+            container.appendChild(userDiv);
+            
+            // Add assistant response
+            const assistantDiv = document.createElement('div');
+            assistantDiv.className = 'chat-entry assistant';
+            assistantDiv.innerHTML = `
+                <div class="section-header">Final Output:</div>
+                <pre class="output-text" style="white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(output)}</pre>
+                <div class="word-count-info">Word Count: ${wordCount.toLocaleString()}</div>
+            `;
+            container.appendChild(assistantDiv);
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function appendError(message) {
+            const container = document.getElementById('chat-container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'chat-entry';
+            errorDiv.innerHTML = `<div class="error-text">${escapeHtml(message)}</div>`;
+            container.appendChild(errorDiv);
+        }
+        
+        async function newChat() {
+            try {
+                await fetch('/clear', {method: 'POST'});
+                document.getElementById('chat-container').innerHTML = '';
+                document.getElementById('word-count').value = '';
+            } catch (e) {
+                // Clear UI anyway
+                document.getElementById('chat-container').innerHTML = '';
+                document.getElementById('word-count').value = '';
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
         
         // Allow Enter key to submit
