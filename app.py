@@ -1,12 +1,31 @@
 from flask import Flask, render_template, request, jsonify, session
 from flask_session import Session
+from flask_session.backends.filesystem import FileSystemSessionInterface
 import requests
 import os
 import secrets
 import string
+import json
+import base64
+from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Generate or load encryption key for session files
+def get_encryption_key():
+    key_file = '/tmp/flask_session_key'
+    if os.path.exists(key_file):
+        with open(key_file, 'rb') as f:
+            return f.read()
+    key = Fernet.generate_key()
+    os.makedirs(os.path.dirname(key_file), exist_ok=True)
+    with open(key_file, 'wb') as f:
+        f.write(key)
+    return key
+
+ENCRYPTION_KEY = get_encryption_key()
+fernet = Fernet(ENCRYPTION_KEY)
 
 def secure_delete_file(filepath):
     """NIST 800-88 compliant cryptographic erase - overwrite before deletion"""
@@ -35,21 +54,40 @@ def clear_session_files_on_startup():
                 filepath = os.path.join(session_dir, filename)
                 secure_delete_file(filepath)
 
-# Clear old session files on startup
 clear_session_files_on_startup()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
-Session(app)
+
+class EncryptedFileSystemSessionInterface(FileSystemSessionInterface):
+    """Custom filesystem session interface that encrypts session data"""
+    
+    def save(self, session_data, session_path):
+        """Encrypt and save session data"""
+        encrypted_data = fernet.encrypt(json.dumps(session_data).encode())
+        with open(session_path, 'wb') as f:
+            f.write(encrypted_data)
+    
+    def load(self, session_path):
+        """Load and decrypt session data"""
+        try:
+            with open(session_path, 'rb') as f:
+                encrypted_data = f.read()
+            decrypted_data = fernet.decrypt(encrypted_data)
+            return json.loads(decrypted_data.decode())
+        except Exception:
+            return {}
+
+app.session_interface = EncryptedFileSystemSessionInterface(app, None, '/tmp/flask_session')
 
 def get_session_file_path():
     """Get the current session file path"""
     session_cookie = request.cookies.get('session', '')
     if session_cookie:
         session_id = session_cookie.replace('"', '').replace("'", "")
-        session_file = os.path.join(app.config.get('SESSION_FILE_DIR', '/tmp/flask_session'), f"session-{session_id}")
+        session_file = os.path.join('/tmp/flask_session', f"session-{session_id}")
         return session_file
     return None
 
