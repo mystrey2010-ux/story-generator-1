@@ -1,30 +1,25 @@
 # Changelog
 
-## [1.1.0] - Enhanced Configuration (WORKING)
+## [1.2.0] - Added Actual Word Count
 
 ### Added
-- Model dropdown selection from available LMStudio models
-- Target Word Count input field for story generation
-- `/models` endpoint to fetch available models
-- Dynamic model loading from LMStudio API
-
-### Removed
-- Hardcoded max_tokens parameter (now uses model default)
-
-### Status
-✅ Working well with current configuration
-
-## [1.0.0] - Simple Chat App Release
-
-### Added
-- Simple Flask web application
-- Single chat endpoint (`/chat`)
-- Clear section separation for API responses
-- Analysis/Thinking section display
-- Final Output section display
-- Environment configuration via `.env`
+- Actual Word Count field (programmatically calculated)
+- Displays word count of returned response
+- Updated UI with purple-themed word count section
 
 ### Changed
-- Completely rebuilt from previous complex implementation
-- Simplified to basic chat functionality
-- Streamlined interface
+- Removed max_tokens parameter (uses model default)
+- Added model dropdown selection from available LMStudio models
+- Added target word count input field
+- Added `/models` endpoint for dynamic model loading
+
+### Status
+✅ All features working well with current implementation
+
+## [1.1.0] - Enhanced Configuration
+- Model dropdown selection
+- Target Word Count input field
+- `/models` endpoint
+
+## [1.0.0] - Simple Chat App Release
+- Initial release

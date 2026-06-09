@@ -118,6 +118,11 @@
             <h2>Final Output:</h2>
             <pre id="final-output" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
         </div>
+        
+        <div id="word-count-section" class="section" style="display: none; background-color: #f3e5f5; border-left: 4px solid #9c27b0;">
+            <h2 style="color: #7b1fa2;">Actual Word Count:</h2>
+            <p id="actual-word-count" style="font-size: 24px; font-weight: bold; margin: 0;"></p>
+        </div>
     </div>
 
     <script>
@@ -160,6 +165,12 @@
                     // Show final output section
                     document.getElementById('final-output').textContent = data.final_output;
                     document.getElementById('output-section').style.display = 'block';
+                    
+                    // Show actual word count
+                    if (data.actual_word_count > 0) {
+                        document.getElementById('actual-word-count').textContent = data.actual_word_count.toLocaleString();
+                        document.getElementById('word-count-section').style.display = 'block';
+                    }
                 } else {
                     document.getElementById('output-section').style.display = 'block';
                     document.getElementById('output-section').className = 'section error';

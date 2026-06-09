@@ -12,7 +12,7 @@ A simple Flask web application that sends prompts to LLM models running on LMStu
   - Models endpoint (`/models`)
   - LMStudio API integration
   - Model selection support
-  - Word count target support
+  - Word count targeting (target and actual)
   - Clear separation of analysis and output sections
 
 ### User Interface
@@ -21,23 +21,25 @@ A simple Flask web application that sends prompts to LLM models running on LMStu
   - Target Word Count input field
   - Prompt input textarea
   - Send button
-  - Three clearly separated display sections:
+  - Four display sections:
     - Your Prompt
     - Analysis / Thinking Process
     - Final Output
+    - Actual Word Count (programmatically calculated)
 
 ## Data Flow
-1. User selects model from dropdown (working)
+1. User selects model from dropdown
 2. User enters optional target word count
 3. User enters prompt in textarea
 4. User clicks Send button
 5. Application sends prompt to LMStudio API
 6. Response is parsed into sections
-7. All sections displayed with clear visual separation
+7. Actual word count calculated from response
+8. All sections displayed with clear visual separation
 
 ## API Endpoints
 - `GET /`: Main interface with model dropdown
-- `POST /chat`: Send prompt and receive structured response
+- `POST /chat`: Send prompt and receive structured response (includes actual_word_count)
 - `GET /models`: Get list of available models
 
 ## Configuration

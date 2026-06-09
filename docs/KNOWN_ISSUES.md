@@ -16,3 +16,4 @@
 
 ## Status Notes
 ✅ All features working well in current implementation
+- Actual word count now calculated programmatically

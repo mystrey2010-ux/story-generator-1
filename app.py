@@ -60,10 +60,15 @@ def chat():
             content = message.get('content', '').strip()
             reasoning_content = message.get('reasoning_content', '').strip()
             
+            # Calculate actual word count from combined response
+            combined_text = content or reasoning_content or ''
+            actual_word_count = len(combined_text.split()) if combined_text else 0
+            
             return jsonify({
                 'original_prompt': prompt,
                 'analysis': reasoning_content if reasoning_content else 'No analysis/thinking section',
-                'final_output': content if content else 'No final output received'
+                'final_output': content if content else 'No final output received',
+                'actual_word_count': actual_word_count
             })
         else:
             return jsonify({'error': f'API error: {response.status_code}'}), 500
