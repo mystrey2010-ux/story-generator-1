@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session
+from flask_session import Session
 import requests
 import os
 from dotenv import load_dotenv
@@ -7,6 +8,9 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
+Session(app)
 
 # Configuration
 LMSTUDIO_HOST = os.getenv('LMSTUDIO_HOST', '192.168.50.2')
