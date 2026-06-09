@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, make_response
+from flask import Flask, render_template, request, jsonify, make_response
 import requests
 import os
 import secrets
@@ -6,7 +6,6 @@ import string
 import json
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
-from itsdangerous import URLSafeTimedSerializer
 
 load_dotenv()
 
@@ -52,22 +51,20 @@ def clear_session_files_on_startup():
 clear_session_files_on_startup()
 
 app = Flask(__name__)
-_secret = os.getenv('SECRET_KEY') or 'dev-secret-key-change-in-production'
-app.secret_key = _secret
-serializer = URLSafeTimedSerializer(_secret)
+app.secret_key = os.getenv('SECRET_KEY') or 'dev-secret-key-change-in-production'
 
 LMSTUDIO_HOST = os.getenv('LMSTUDIO_HOST', '192.168.50.2')
 LMSTUDIO_PORT = os.getenv('LMSTUDIO_PORT', '1234')
 MODEL_NAME = 'dirty-muse-writer-v01-uncensored-erotica-nsfw-i1'
 
 def get_session_id():
-    """Get or create session ID stored in signed cookie"""
+    """Get or create session ID from cookie or generate new one"""
     sid = request.cookies.get('sid')
     if not sid:
         sid = secrets.token_hex(32)
     return sid
 
-def load_encrypted_session(sid):
+def load_session_data(sid):
     """Load encrypted session from file"""
     if sid:
         session_file = f"/tmp/flask_session/{sid}"
@@ -81,14 +78,13 @@ def load_encrypted_session(sid):
                 pass
     return {}
 
-def save_encrypted_session(sid, data):
+def save_session_data(sid, data):
     """Save encrypted session to file"""
-    if data:
-        session_file = f"/tmp/flask_session/{sid}"
-        os.makedirs(os.path.dirname(session_file), exist_ok=True)
-        encrypted_data = fernet.encrypt(json.dumps(data).encode())
-        with open(session_file, 'wb') as f:
-            f.write(encrypted_data)
+    session_file = f"/tmp/flask_session/{sid}"
+    os.makedirs(os.path.dirname(session_file), exist_ok=True)
+    encrypted_data = fernet.encrypt(json.dumps(data).encode())
+    with open(session_file, 'wb') as f:
+        f.write(encrypted_data)
 
 def get_available_models():
     try:
@@ -104,8 +100,10 @@ def get_available_models():
 @app.route('/')
 def index():
     sid = get_session_id()
-    chat_history = load_encrypted_session(sid).get('chat_history', [])
+    session_data = load_session_data(sid)
+    chat_history = session_data.get('chat_history', [])
     models = get_available_models()
+    
     response = make_response(render_template('index.html', models=models, chat_history=chat_history))
     if not request.cookies.get('sid'):
         response.set_cookie('sid', sid, httponly=True, samesite='Lax')
@@ -115,7 +113,7 @@ def index():
 def chat():
     try:
         sid = get_session_id()
-        session_data = load_encrypted_session(sid)
+        session_data = load_session_data(sid)
         chat_history = session_data.get('chat_history', [])
         
         data = request.get_json()
@@ -169,15 +167,18 @@ def chat():
             chat_history.append(chat_entry)
             
             session_data['chat_history'] = chat_history
-            save_encrypted_session(sid, session_data)
+            save_session_data(sid, session_data)
 
-            return jsonify({
+            resp = make_response(jsonify({
                 'original_prompt': prompt,
                 'analysis': reasoning_content if reasoning_content else 'No analysis/thinking section',
                 'final_output': content if content else 'No final output received',
                 'actual_word_count': actual_word_count,
                 'chat_history': chat_history
-            })
+            }))
+            if not request.cookies.get('sid'):
+                resp.set_cookie('sid', sid, httponly=True, samesite='Lax')
+            return resp
         else:
             return jsonify({'error': f'API error: {response.status_code}'}), 500
 
