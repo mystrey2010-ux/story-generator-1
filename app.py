@@ -36,18 +36,25 @@ def chat():
         if not prompt:
             return jsonify({'error': 'No prompt provided'}), 400
         
-        # Append word count instruction if provided
+        # Append word count instruction if provided - make it a primary goal
         if word_count:
-            prompt = f"{prompt}\n\nTarget word count: {word_count} words"
+            prompt = f"{prompt}\n\nIMPORTANT: Aim for approximately {word_count} words total. This is a primary goal for your response length."
         
         # Send to LMStudio (no max_tokens - use model default)
         url = f"http://{LMSTUDIO_HOST}:{LMSTUDIO_PORT}/v1/chat/completions"
+        
+        messages = [{"role": "user", "content": prompt}]
+        
+        # Add system message to emphasize word count goal
+        if word_count:
+            system_msg = f"PRIMARY GOAL: Generate a response of approximately {word_count} words. This is a critical length requirement that should be your main priority when generating content."
+            messages.insert(0, {"role": "system", "content": system_msg})
         
         response = requests.post(
             url,
             json={
                 "model": model,
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": messages,
                 "temperature": 0.7
             },
             timeout=600
