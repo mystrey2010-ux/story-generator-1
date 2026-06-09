@@ -1,19 +1,22 @@
 # Technical Decisions
 
+## Session Storage
+- **Server-side encrypted files** (not cookie storage)
+- Session ID stored in httponly cookie
+- Session data in `/tmp/flask_session/{sid}` encrypted with Fernet
+- No 4KB cookie limit - unlimited chat history size
+
+## Encryption
+- Fernet (AES-128-CBC with HMAC) for file encryption
+- Key stored separately in `/tmp/flask_session_key`
+- Cryptography library for NIST-compliant security
+
+## Session Management
+- NIST 800-88 compliant secure deletion (3-pass overwrite)
+- Session cleared on startup
+- Encrypted persistence between requests
+
 ## UI Design
-- Modern chat bubble interface (Gemini/ChatGPT style)
-- Auto-expanding textarea for better UX
-- "You" / "Assistant" labels for clear context
-- Word count per message in small text
-- ✅ Working well
-
-## Chat Memory
-- Flask sessions store chat history
-- System message added per prompt
-- NEW Chat button clears session
-- ✅ Working well
-
-## Performance
-- No max_tokens (uses model default)
-- 10-minute timeout for long generations
-- Optimized for readability
+- Modern chat bubble interface
+- Google Gemini/ChatGPT style
+- Responsive and clean

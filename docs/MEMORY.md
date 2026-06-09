@@ -1,13 +1,13 @@
 # Project Memory
 
-## UI Design Decisions
-- Chat bubble style similar to popular LLM interfaces
-- Auto-expanding textarea for better user experience
-- Message labels prevent confusion about speaker
-- Word count in small text below responses
-- Clean modern color palette
+## Session Architecture
+- Cookie stores only session ID (sid) - 64 hex chars
+- Session files in `/tmp/flask_session/{sid}` are encrypted
+- Encryption key in `/tmp/flask_session_key`
+- No Flask-Session dependency needed
 
-## Working Features
-- Chat memory via Flask sessions
-- Per-prompt system message for word count
-- Responsive design for all devices
+## Implementation Notes
+- Custom encrypted session implementation
+- Fernet library for AES-128 encryption
+- Secrets module for secure random generation
+- Secure overwrite before file deletion
