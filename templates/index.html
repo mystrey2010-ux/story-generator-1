@@ -57,13 +57,13 @@
         }
         
         .controls input {
-            width: 120px;
+            width: 240px;
             text-align: center;
         }
         
         .controls select {
             flex: 1;
-            max-width: 200px;
+            max-width: 400px;
         }
         
         .clear-btn {
@@ -233,7 +233,7 @@
             {% endfor %}
         </div>
         
-        <div class="loading" id="loading">Thinking...</div>
+        <div class="loading" id="loading" style="display: none;">Thinking...</div>
         
         <div class="input-area">
             <textarea id="prompt" placeholder="Type your message here..." rows="1"></textarea>
