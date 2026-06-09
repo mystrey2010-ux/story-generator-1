@@ -1,18 +1,14 @@
 # Project State
 
 ## Current Status
-✅ Fully functional with all fixes applied.
+✅ Fully functional with animated loading indicator.
 
-## Fixes Applied
-- ✅ "Thinking..." hidden on initial load
-- ✅ LLM dropdown width doubled (400px)
-- ✅ Target words field width doubled (240px)
-- ✅ Flask startup tip cleared (using python app.py directly)
-
-## Features Working
-- Model selection (wider dropdown)
-- Target word count input (wider field)
-- Session-based chat
-- NEW Chat button
-- Modern chat bubble interface
-- Auto-expanding textarea
+## Features Complete
+- ✅ Model selection dropdown (wider)
+- ✅ Target word count (wider field)
+- ✅ Animated "Thinking..." indicator with pulsing dots
+- ✅ Session-based chat
+- ✅ NEW Chat button
+- ✅ Modern chat bubble interface
+- ✅ Auto-expanding textarea
+- ✅ Flask tip cleared (python-dotenv installed)
