@@ -10,7 +10,8 @@
 - No max_tokens parameter (uses model default)
 - Temperature: 0.7 for balanced creativity
 - Timeout: 600 seconds (10 minutes) for long-running requests
-- ⚠️ Note: LLMs do not enforce target word counts
+- System message added to emphasize word count priority
+- ⚠️ Note: LLMs do not perfectly enforce target word counts
 
 ## Response Handling
 - Display `content` field as Final Output

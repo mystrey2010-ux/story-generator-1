@@ -49,10 +49,10 @@ A simple Flask web application that sends prompts to LLM models running on LMStu
 - No max_tokens specified (uses model default)
 
 ## Important Notes
-- **Target word count is not enforced** by the AI
-- LLMs generate based on context and prompt instructions
+- **Target word count is prioritized via system message**, not enforced
+- System message makes word count a "PRIMARY GOAL" for the LLM
 - Actual word count is calculated from the response text
-- Use word count as guidance, not a strict requirement
+- LLMs still may vary significantly from targets
 
 ## Environment Setup
 - `.env` file for sensitive configuration

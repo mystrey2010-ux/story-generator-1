@@ -13,6 +13,7 @@
 - Added target word count input field
 - Added `/models` endpoint for dynamic model loading
 - Increased timeout to 600 seconds (10 minutes)
+- Strengthened word count as primary goal via system message
 
 ### Status
 ✅ All features working well with current implementation
