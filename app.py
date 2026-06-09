@@ -49,15 +49,17 @@ def chat():
         
         # Build messages from history
         messages = []
+        
+        # Always add system message for word count if provided (per prompt basis)
+        if word_count:
+            system_msg = f"IMPORTANT: Aim for approximately {word_count} words total. This is a PRIMARY GOAL for your response length."
+            messages.append({"role": "system", "content": system_msg})
+        
+        # Add conversation history
         for msg in chat_history:
             messages.append({"role": "user", "content": msg['prompt']})
             if msg.get('response'):
                 messages.append({"role": "assistant", "content": msg['response']})
-        
-        # Add system message with word count goal BEFORE user prompt
-        if word_count:
-            system_msg = f"IMPORTANT: Aim for approximately {word_count} words total. This is a primary goal for your response length."
-            messages.insert(0, {"role": "system", "content": system_msg})
         
         # Add current prompt
         messages.append({"role": "user", "content": prompt})
