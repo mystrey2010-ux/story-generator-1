@@ -1,12 +1,12 @@
 # Story Generator Application Architecture
 
 ## Overview
-A simple Flask web application that sends prompts to LLM models running on LMStudio and displays the response with clear section separation.
+A simple Flask web application that sends prompts to LLM models running on LMStudio and displays the response with clear section separation. **Status: Working well.**
 
 ## Components
 
 ### Main Application
-- `app.py`: Core Flask application with:
+- `app.py`: Core Flask application (working) with:
   - Web interface rendering (`/`)
   - Chat endpoint (`/chat`)
   - Models endpoint (`/models`)
@@ -16,8 +16,8 @@ A simple Flask web application that sends prompts to LLM models running on LMStu
   - Clear separation of analysis and output sections
 
 ### User Interface
-- `templates/index.html`: Simple interface with:
-  - Model dropdown selection
+- `templates/index.html`: Simple interface (working) with:
+  - Model dropdown selection (populated from LMStudio)
   - Target Word Count input field
   - Prompt input textarea
   - Send button
@@ -27,7 +27,7 @@ A simple Flask web application that sends prompts to LLM models running on LMStu
     - Final Output
 
 ## Data Flow
-1. User selects model from dropdown
+1. User selects model from dropdown (working)
 2. User enters optional target word count
 3. User enters prompt in textarea
 4. User clicks Send button

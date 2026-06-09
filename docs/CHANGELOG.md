@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.0] - Enhanced Configuration
+## [1.1.0] - Enhanced Configuration (WORKING)
 
 ### Added
 - Model dropdown selection from available LMStudio models
@@ -10,6 +10,9 @@
 
 ### Removed
 - Hardcoded max_tokens parameter (now uses model default)
+
+### Status
+✅ Working well with current configuration
 
 ## [1.0.0] - Simple Chat App Release
 
