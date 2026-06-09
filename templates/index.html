@@ -293,6 +293,7 @@
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
                     body: JSON.stringify({
                         prompt: prompt,
                         model: model,
@@ -355,7 +356,7 @@
         
         async function newChat() {
             try {
-                await fetch('/clear', {method: 'POST'});
+                await fetch('/clear', {method: 'POST', credentials: 'include'});
             } catch (e) {
                 // Continue to clear UI
             }
