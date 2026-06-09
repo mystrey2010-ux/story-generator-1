@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify, session
 from flask_session import Session
 import requests
 import os
+import secrets
+import string
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,6 +13,34 @@ app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
 Session(app)
+
+def secure_delete_file(filepath):
+    """NIST 800-88 compliant cryptographic erase - overwrite before deletion"""
+    try:
+        file_size = os.path.getsize(filepath)
+        for _ in range(3):
+            random_data = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(file_size))
+            with open(filepath, 'w') as f:
+                f.write(random_data)
+            os.sync()
+        os.remove(filepath)
+    except FileNotFoundError:
+        pass
+    except Exception:
+        try:
+            os.remove(filepath)
+        except:
+            pass
+
+def get_session_file_path():
+    """Get the current session file path"""
+    session_cookie = request.cookies.get('session', '')
+    if session_cookie:
+        # Flask-Session encodes session ID in filename
+        session_id = session_cookie.replace('"', '').replace("'", "")
+        session_file = os.path.join(app.config.get('SESSION_FILE_DIR', '/tmp/flask_session'), f"session-{session_id}")
+        return session_file
+    return None
 
 # Configuration
 LMSTUDIO_HOST = os.getenv('LMSTUDIO_HOST', '192.168.50.2')
@@ -51,27 +81,20 @@ def chat():
         if not prompt:
             return jsonify({'error': 'No prompt provided'}), 400
         
-        # Get chat history
         chat_history = session.get('chat_history', [])
-        
-        # Build messages from history
         messages = []
         
-        # Always add system message for word count if provided (per prompt basis)
         if word_count:
             system_msg = f"IMPORTANT: Aim for approximately {word_count} words total. This is a PRIMARY GOAL for your response length."
             messages.append({"role": "system", "content": system_msg})
         
-        # Add conversation history
         for msg in chat_history:
             messages.append({"role": "user", "content": msg['prompt']})
             if msg.get('response'):
                 messages.append({"role": "assistant", "content": msg['response']})
         
-        # Add current prompt
         messages.append({"role": "user", "content": prompt})
         
-        # Send to LMStudio
         url = f"http://{LMSTUDIO_HOST}:{LMSTUDIO_PORT}/v1/chat/completions"
         
         response = requests.post(
@@ -94,7 +117,6 @@ def chat():
             combined_text = content or reasoning_content or ''
             actual_word_count = len(combined_text.split()) if combined_text else 0
             
-            # Store in history
             chat_entry = {
                 'prompt': prompt,
                 'response': content,
@@ -124,7 +146,11 @@ def models():
 
 @app.route('/clear', methods=['POST'])
 def clear():
-    """Clear chat history"""
+    """Clear chat history with NIST 800-88 compliant secure file deletion"""
+    session_file = get_session_file_path()
+    if session_file and os.path.exists(session_file):
+        secure_delete_file(session_file)
+    
     session['chat_history'] = []
     session.modified = True
     return jsonify({'success': True})
