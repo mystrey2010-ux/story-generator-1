@@ -1,13 +1,12 @@
 from flask import Flask, render_template, request, jsonify, session
-from flask_session import Session
 import requests
 import os
 import secrets
 import string
 import json
-import uuid
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
+from itsdangerous import URLSafeTimedSerializer
 
 load_dotenv()
 
@@ -24,6 +23,7 @@ def get_encryption_key():
 
 ENCRYPTION_KEY = get_encryption_key()
 fernet = Fernet(ENCRYPTION_KEY)
+serializer = URLSafeTimedSerializer(os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production'))
 
 def secure_delete_file(filepath):
     try:
@@ -43,8 +43,7 @@ def secure_delete_file(filepath):
             pass
 
 def load_encrypted_session():
-    """Load encrypted session from file"""
-    session_id = request.cookies.get('session', '')
+    session_id = session.get('_id', '')
     if session_id:
         session_file = f"/tmp/flask_session/{session_id}"
         if os.path.exists(session_file):
@@ -53,18 +52,20 @@ def load_encrypted_session():
                     encrypted_data = f.read()
                 decrypted_data = fernet.decrypt(encrypted_data)
                 session_data = json.loads(decrypted_data.decode())
-                session.update(session_data)
+                for k, v in session_data.items():
+                    if k != '_id':
+                        session[k] = v
             except Exception:
                 pass
 
 def save_encrypted_session():
-    """Save encrypted session to file"""
     if 'chat_history' in session:
-        session_id = request.cookies.get('session', '') or str(uuid.uuid4())
+        session_id = session.get('_id') or secrets.token_hex(16)
         session['_id'] = session_id
         session_file = f"/tmp/flask_session/{session_id}"
         os.makedirs(os.path.dirname(session_file), exist_ok=True)
-        encrypted_data = fernet.encrypt(json.dumps(dict(session)).encode())
+        data_to_encrypt = {k: v for k, v in dict(session).items() if k != '_id'}
+        encrypted_data = fernet.encrypt(json.dumps(data_to_encrypt).encode())
         with open(session_file, 'wb') as f:
             f.write(encrypted_data)
 
@@ -80,8 +81,6 @@ clear_session_files_on_startup()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
-app.config['SESSION_TYPE'] = 'null'
-Session(app)
 
 LMSTUDIO_HOST = os.getenv('LMSTUDIO_HOST', '192.168.50.2')
 LMSTUDIO_PORT = os.getenv('LMSTUDIO_PORT', '1234')
@@ -181,14 +180,13 @@ def models():
 
 @app.route('/clear', methods=['POST'])
 def clear():
-    session_id = request.cookies.get('session', '')
+    session_id = session.get('_id', '')
     if session_id:
         filepath = f"/tmp/flask_session/{session_id}"
         if os.path.exists(filepath):
             secure_delete_file(filepath)
 
-    session['chat_history'] = []
-    save_encrypted_session()
+    session.clear()
     return jsonify({'success': True})
 
 if __name__ == '__main__':
