@@ -1,9 +1,12 @@
 # Known Issues
 
+## Fixes Applied
+- ✅ Session cookie size issue FIXED with Flask-Session
+- Sessions now stored on filesystem (no 4KB limit)
+
 ## Limitations
 - LLMs do NOT perfectly enforce target word counts (best effort via system message)
-- Actual word count will often differ from target (though improved with priority)
-- Very large chat histories may impact performance
+- Actual word count will often differ from target
 
 ## Connectivity
 - Requires LMStudio at configured IP
@@ -13,4 +16,3 @@
 ## Model Behavior
 - Models generate based on context and priority
 - Response length influenced but not strictly controlled
-- System message adds word count as priority
