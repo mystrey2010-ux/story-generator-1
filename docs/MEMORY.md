@@ -10,7 +10,7 @@
 ## Configuration Notes
 - Token limit uses model default
 - Response times working well
-- 5-minute timeout appropriate for this model
+- 10-minute timeout (600 seconds) for long generations
 - Model dropdown successfully fetching from LMStudio API
 
 ## Features Implemented
