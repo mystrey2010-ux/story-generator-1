@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.0] - Enhanced Configuration
+
+### Added
+- Model dropdown selection from available LMStudio models
+- Target Word Count input field for story generation
+- `/models` endpoint to fetch available models
+- Dynamic model loading from LMStudio API
+
+### Removed
+- Hardcoded max_tokens parameter (now uses model default)
+
 ## [1.0.0] - Simple Chat App Release
 
 ### Added
@@ -10,17 +21,7 @@
 - Final Output section display
 - Environment configuration via `.env`
 
-### Configuration
-- Model: `qwen3.5-4b-nsfw-ara-heretic-literotica-i1`
-- Max tokens: 262144 (full context length)
-- Timeout: 300 seconds
-
 ### Changed
 - Completely rebuilt from previous complex implementation
 - Simplified to basic chat functionality
 - Streamlined interface
-
-### Removed
-- Previous two-step story generation workflow
-- Multiple model selection
-- Complex refinement features

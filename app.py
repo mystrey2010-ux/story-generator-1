@@ -7,31 +7,48 @@ app = Flask(__name__)
 # Configuration
 LMSTUDIO_HOST = os.getenv('LMSTUDIO_HOST', '192.168.50.2')
 LMSTUDIO_PORT = os.getenv('LMSTUDIO_PORT', '1234')
-MODEL_NAME = 'qwen3.5-4b-nsfw-ara-heretic-literotica-i1'
+
+def get_available_models():
+    """Fetch available models from LMStudio"""
+    try:
+        url = f"http://{LMSTUDIO_HOST}:{LMSTUDIO_PORT}/v1/models"
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            models = response.json()
+            return [m['id'] for m in models.get('data', [])]
+    except Exception:
+        pass
+    return ['dirty-muse-writer-v01-uncensored-erotica-nsfw-i1']
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    models = get_available_models()
+    return render_template('index.html', models=models)
 
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
         data = request.get_json()
         prompt = data.get('prompt', '')
+        model = data.get('model', 'dirty-muse-writer-v01-uncensored-erotica-nsfw-i1')
+        word_count = data.get('word_count', '')
         
         if not prompt:
             return jsonify({'error': 'No prompt provided'}), 400
         
-        # Send to LMStudio
+        # Append word count instruction if provided
+        if word_count:
+            prompt = f"{prompt}\n\nTarget word count: {word_count} words"
+        
+        # Send to LMStudio (no max_tokens - use model default)
         url = f"http://{LMSTUDIO_HOST}:{LMSTUDIO_PORT}/v1/chat/completions"
         
         response = requests.post(
             url,
             json={
-                "model": MODEL_NAME,
+                "model": model,
                 "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.7,
-                "max_tokens": 262144  # Full context length as requested
+                "temperature": 0.7
             },
             timeout=300
         )
@@ -40,7 +57,6 @@ def chat():
             result = response.json()
             message = result['choices'][0]['message']
             
-            # Get fields as they are
             content = message.get('content', '').strip()
             reasoning_content = message.get('reasoning_content', '').strip()
             
@@ -54,6 +70,11 @@ def chat():
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/models')
+def models():
+    """Endpoint to get available models"""
+    return jsonify({'models': get_available_models()})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)

@@ -1,27 +1,29 @@
 # Project State
 
 ## Current Status
-Simple chat application ready for testing. Displays LMStudio API responses with clear section separation.
+Enhanced chat application with model selection and word count targeting. Ready for testing.
 
 ## Objectives
 - Provide simple web interface for chat prompts
+- Allow model selection from available LMStudio models
+- Support optional target word count for story generation
 - Display both analysis and final output clearly
-- Support single QWEN model via LMStudio
 
 ## Recent Changes
-- Complete rebuild of application
-- Simplified to basic chat functionality
-- Added clear section separation
-- Updated max_tokens to 262144 (full context)
+- Removed max_tokens parameter (uses model default)
+- Added model dropdown selection
+- Added target word count input field
+- Added `/models` endpoint for dynamic model loading
 
 ## Dependencies
 - Python 3.9+
 - Flask
 - requests
-- LMStudio server at 192.168.50.2:1234
-- qwen3.5-4b-nsfw-ara-heretic-literotica-i1 model loaded
+- LMStudio server at configured host/port
+- Models loaded in LMStudio
 
 ## Next Steps
 1. Test connectivity to LMStudio
-2. Verify model produces complete responses
-3. Test response time with 262144 max_tokens
+2. Verify model dropdown populates correctly
+3. Test word count targeting functionality
+4. Verify response handling

@@ -1,13 +1,15 @@
 # Technical Decisions
 
 ## Model Selection
-- Single model: `qwen3.5-4b-nsfw-ara-heretic-literotica-i1`
-- Hardcoded for simplicity in this implementation
+- Dynamic model selection via dropdown
+- Models fetched from LMStudio `/v1/models` endpoint
+- Falls back to default model if API unavailable
 
 ## API Integration
-- Single chat completion endpoint
-- No model selection complexity
-- Clear response parsing for reasoning and content fields
+- No max_tokens parameter (uses model default)
+- Temperature: 0.7 for balanced creativity
+- Timeout: 300 seconds for long-running requests
+- Support for both model selection and word count targets
 
 ## Response Handling
 - Display `content` field as Final Output
@@ -15,10 +17,10 @@
 - No filtering or processing of responses
 - Show exactly what LMStudio returns
 
-## Token Configuration
-- max_tokens: 262144 (full context length)
-- timeout: 300 seconds (5 minutes)
-- Appropriate for local LLM processing
+## User Interface
+- Model dropdown populated on page load
+- Target Word Count is optional
+- If word count provided, appended to prompt automatically
 
 ## Configuration
 - Environment variables via `.env` file

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Chat App</title>
+    <title>Chat with LLM Models</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,6 +21,17 @@
         h1 {
             color: #333;
             text-align: center;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .controls select, .controls input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            flex: 1;
         }
         textarea, button {
             width: 100%;
@@ -77,7 +88,16 @@
 </head>
 <body>
     <div class="container">
-        <h1>Simple Chat with QWEN Model</h1>
+        <h1>Chat with LLM Models</h1>
+        
+        <div class="controls">
+            <select id="model-select">
+                {% for model in models %}
+                <option value="{{ model }}">{{ model }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="word-count" placeholder="Target Word Count (optional)" min="1">
+        </div>
         
         <textarea id="prompt" placeholder="Enter your prompt here..."></textarea>
         <button onclick="sendPrompt()">Send to LMStudio</button>
@@ -103,6 +123,8 @@
     <script>
         async function sendPrompt() {
             const prompt = document.getElementById('prompt').value;
+            const model = document.getElementById('model-select').value;
+            const wordCount = document.getElementById('word-count').value;
             const loading = document.getElementById('loading');
             
             if (!prompt) {
@@ -116,7 +138,11 @@
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt: prompt})
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        model: model,
+                        word_count: wordCount
+                    })
                 });
                 
                 const data = await response.json();
