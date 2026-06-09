@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, make_response
 import requests
 import os
 import secrets
@@ -23,7 +23,6 @@ def get_encryption_key():
 
 ENCRYPTION_KEY = get_encryption_key()
 fernet = Fernet(ENCRYPTION_KEY)
-serializer = URLSafeTimedSerializer(os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production'))
 
 def secure_delete_file(filepath):
     try:
@@ -42,33 +41,6 @@ def secure_delete_file(filepath):
         except:
             pass
 
-def load_encrypted_session():
-    session_id = session.get('_id', '')
-    if session_id:
-        session_file = f"/tmp/flask_session/{session_id}"
-        if os.path.exists(session_file):
-            try:
-                with open(session_file, 'rb') as f:
-                    encrypted_data = f.read()
-                decrypted_data = fernet.decrypt(encrypted_data)
-                session_data = json.loads(decrypted_data.decode())
-                for k, v in session_data.items():
-                    if k != '_id':
-                        session[k] = v
-            except Exception:
-                pass
-
-def save_encrypted_session():
-    if 'chat_history' in session:
-        session_id = session.get('_id') or secrets.token_hex(16)
-        session['_id'] = session_id
-        session_file = f"/tmp/flask_session/{session_id}"
-        os.makedirs(os.path.dirname(session_file), exist_ok=True)
-        data_to_encrypt = {k: v for k, v in dict(session).items() if k != '_id'}
-        encrypted_data = fernet.encrypt(json.dumps(data_to_encrypt).encode())
-        with open(session_file, 'wb') as f:
-            f.write(encrypted_data)
-
 def clear_session_files_on_startup():
     session_dir = '/tmp/flask_session'
     if os.path.exists(session_dir):
@@ -80,11 +52,43 @@ def clear_session_files_on_startup():
 clear_session_files_on_startup()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+_secret = os.getenv('SECRET_KEY') or 'dev-secret-key-change-in-production'
+app.secret_key = _secret
+serializer = URLSafeTimedSerializer(_secret)
 
 LMSTUDIO_HOST = os.getenv('LMSTUDIO_HOST', '192.168.50.2')
 LMSTUDIO_PORT = os.getenv('LMSTUDIO_PORT', '1234')
 MODEL_NAME = 'dirty-muse-writer-v01-uncensored-erotica-nsfw-i1'
+
+def get_session_id():
+    """Get or create session ID stored in signed cookie"""
+    sid = request.cookies.get('sid')
+    if not sid:
+        sid = secrets.token_hex(32)
+    return sid
+
+def load_encrypted_session(sid):
+    """Load encrypted session from file"""
+    if sid:
+        session_file = f"/tmp/flask_session/{sid}"
+        if os.path.exists(session_file):
+            try:
+                with open(session_file, 'rb') as f:
+                    encrypted_data = f.read()
+                decrypted_data = fernet.decrypt(encrypted_data)
+                return json.loads(decrypted_data.decode())
+            except Exception:
+                pass
+    return {}
+
+def save_encrypted_session(sid, data):
+    """Save encrypted session to file"""
+    if data:
+        session_file = f"/tmp/flask_session/{sid}"
+        os.makedirs(os.path.dirname(session_file), exist_ok=True)
+        encrypted_data = fernet.encrypt(json.dumps(data).encode())
+        with open(session_file, 'wb') as f:
+            f.write(encrypted_data)
 
 def get_available_models():
     try:
@@ -99,15 +103,21 @@ def get_available_models():
 
 @app.route('/')
 def index():
-    load_encrypted_session()
+    sid = get_session_id()
+    chat_history = load_encrypted_session(sid).get('chat_history', [])
     models = get_available_models()
-    chat_history = session.get('chat_history', [])
-    return render_template('index.html', models=models, chat_history=chat_history)
+    response = make_response(render_template('index.html', models=models, chat_history=chat_history))
+    if not request.cookies.get('sid'):
+        response.set_cookie('sid', sid, httponly=True, samesite='Lax')
+    return response
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    load_encrypted_session()
     try:
+        sid = get_session_id()
+        session_data = load_encrypted_session(sid)
+        chat_history = session_data.get('chat_history', [])
+        
         data = request.get_json()
         prompt = data.get('prompt', '')
         model = data.get('model', MODEL_NAME)
@@ -116,7 +126,6 @@ def chat():
         if not prompt:
             return jsonify({'error': 'No prompt provided'}), 400
 
-        chat_history = session.get('chat_history', [])
         messages = []
 
         if word_count:
@@ -158,8 +167,9 @@ def chat():
                 'actual_word_count': actual_word_count
             }
             chat_history.append(chat_entry)
-            session['chat_history'] = chat_history
-            save_encrypted_session()
+            
+            session_data['chat_history'] = chat_history
+            save_encrypted_session(sid, session_data)
 
             return jsonify({
                 'original_prompt': prompt,
@@ -180,13 +190,11 @@ def models():
 
 @app.route('/clear', methods=['POST'])
 def clear():
-    session_id = session.get('_id', '')
-    if session_id:
-        filepath = f"/tmp/flask_session/{session_id}"
-        if os.path.exists(filepath):
-            secure_delete_file(filepath)
-
-    session.clear()
+    sid = get_session_id()
+    filepath = f"/tmp/flask_session/{sid}"
+    if os.path.exists(filepath):
+        secure_delete_file(filepath)
+    
     return jsonify({'success': True})
 
 if __name__ == '__main__':
