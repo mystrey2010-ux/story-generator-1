@@ -9,7 +9,7 @@
 ## API Integration
 - No max_tokens parameter (uses model default)
 - Temperature: 0.7 for balanced creativity
-- Timeout: 300 seconds for long-running requests
+- Timeout: 600 seconds (10 minutes) for long-running requests
 - ⚠️ Note: LLMs do not enforce target word counts
 
 ## Response Handling

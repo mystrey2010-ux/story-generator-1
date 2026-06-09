@@ -45,7 +45,7 @@ A simple Flask web application that sends prompts to LLM models running on LMStu
 ## Configuration
 - Host: Configurable via `LMSTUDIO_HOST` environment variable
 - Port: Configurable via `LMSTUDIO_PORT` environment variable
-- Timeout: 300 seconds
+- Timeout: 600 seconds (10 minutes)
 - No max_tokens specified (uses model default)
 
 ## Important Notes

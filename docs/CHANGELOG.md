@@ -12,6 +12,7 @@
 - Added model dropdown selection from available LMStudio models
 - Added target word count input field
 - Added `/models` endpoint for dynamic model loading
+- Increased timeout to 600 seconds (10 minutes)
 
 ### Status
 ✅ All features working well with current implementation

@@ -8,7 +8,7 @@
 
 ## Connectivity
 - Requires LMStudio running at configured IP address
-- May timeout on slow systems (5 minute timeout configured)
+- May timeout on slow systems (10-minute timeout configured)
 - Model list endpoint may fail silently (falls back to default)
 
 ## Model Behavior

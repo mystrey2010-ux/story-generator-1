@@ -50,7 +50,7 @@ def chat():
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.7
             },
-            timeout=300
+            timeout=600
         )
         
         if response.status_code == 200:

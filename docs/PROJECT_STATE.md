@@ -18,7 +18,7 @@
 - ✅ Added actual_word_count to API response
 - ✅ Added Actual Word Count display section in UI
 - ✅ Removed max_tokens (uses model default)
-- ✅ All features tested and working
+- ✅ Increased timeout to 600 seconds (10 minutes)
 
 ## Testing Status
 - ✅ Application tested and working
