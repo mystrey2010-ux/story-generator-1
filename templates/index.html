@@ -176,22 +176,19 @@
         .loading {
             text-align: center;
             padding: 20px;
-            color: #64748b;
-            font-size: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
         }
         
         .loading-dots {
             display: flex;
-            gap: 3px;
+            gap: 6px;
         }
         
         .loading-dots span {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             background: #64748b;
             border-radius: 50%;
             animation: pulse 1.4s ease-in-out infinite;
@@ -202,7 +199,7 @@
         .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
         
         @keyframes pulse {
-            0%, 60%, 100% { opacity: 0.3; transform: scale(0.9); }
+            0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
             30% { opacity: 1; transform: scale(1.1); }
         }
         
@@ -260,7 +257,6 @@
         </div>
         
         <div class="loading" id="loading" style="display: none;">
-            <span>Thinking</span>
             <div class="loading-dots">
                 <span></span>
                 <span></span>
