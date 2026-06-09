@@ -1,26 +1,21 @@
 # Changelog
 
-## [1.3.0] - Chat History & Webchat Interface
+## [1.4.0] - Modern Webchat UI Redesign
 
 ### Added
-- Session-based chat history (persists across prompts)
-- NEW Chat button to clear session
-- Scrollable chat display
-- System message prioritized BEFORE user prompts
-- Word count as system-level priority
+- Gemini/ChatGPT/Copilot-style chat bubble design
+- Auto-expanding input textarea
+- Message labels ("You" / "Assistant")
+- Word count displayed per message
+- Modern color scheme and rounded corners
 
 ### Changed
-- Upgraded to webchat-style interface
-- Removed separate analysis section for cleaner chat flow
-- Chat history maintained via Flask sessions
+- Complete UI overhaul to modern webchat style
+- Removed separate analysis section
+- Better mobile responsiveness
+- Cleaner chat display
 
-### Fixed
-- Word count goal now emphasized as system instruction
-
-## [1.2.0] - Added Actual Word Count
-- Programmatic word count calculation
-
-## [1.1.0] - Enhanced Configuration
-- Model dropdown, word count input
-
-## [1.0.0] - Simple Chat App Release
+## [1.3.0] - Chat History & Webchat Interface
+- Session-based chat history
+- NEW Chat button
+- System message prioritized per prompt
